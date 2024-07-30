@@ -41,7 +41,7 @@ const setup = ({ isOpen = true, showStaticEmbedTerms = true } = {}) => {
     {
       storeInitialState: createMockState({
         settings: mockSettings({
-          "application-name": "Embed Metabase",
+          "application-name": "Embed Omniloy",
           "show-static-embed-terms": showStaticEmbedTerms,
         }),
       }),

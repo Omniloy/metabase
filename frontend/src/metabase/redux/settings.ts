@@ -12,7 +12,7 @@ export const refreshSiteSettings = createAsyncThunk(
   async ({ locale }: { locale?: string } = {}) => {
     const settings = await SessionApi.properties(null, {
       // eslint-disable-next-line no-literal-metabase-strings -- Not a user facing string
-      headers: locale ? { "X-Metabase-Locale": locale } : {},
+      headers: locale ? { "X-Omniloy-Locale": locale } : {},
     });
     MetabaseSettings.setAll(settings);
     return settings;

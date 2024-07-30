@@ -190,7 +190,7 @@ export const ADMIN_SETTINGS_SECTIONS = {
       {
         key: "email-from-name",
         display_name: t`From Name`,
-        placeholder: "Metabase",
+        placeholder: "Omniloy",
         type: "string",
         required: false,
       },
@@ -290,7 +290,7 @@ export const ADMIN_SETTINGS_SECTIONS = {
       {
         key: "map-tile-server-url",
         display_name: t`Map tile server URL`,
-        note: t`Metabase uses OpenStreetMaps by default.`,
+        note: t`Omniloy uses OpenStreetMaps by default.`,
         type: "string",
       },
       {
