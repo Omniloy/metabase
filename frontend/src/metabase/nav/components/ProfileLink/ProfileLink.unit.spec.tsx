@@ -15,12 +15,7 @@ import {
   createMockAdminAppState,
 } from "metabase-types/store/mocks";
 
-const REGULAR_ITEMS = [
-  "Account settings",
-  "Help",
-  "About Metabase",
-  "Sign out",
-];
+const REGULAR_ITEMS = ["Account settings", "Help", "About Omniloy", "Sign out"];
 const ADMIN_ITEMS = [...REGULAR_ITEMS, "Admin settings"];
 const HOSTED_ITEMS = [...ADMIN_ITEMS];
 

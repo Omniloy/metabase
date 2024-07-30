@@ -290,7 +290,7 @@ describe("Notebook Editor > Join Step", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("questions from another database should not appear in recents (Metabase#44974)", async () => {
+  it("questions from another database should not appear in recents (Omniloy#44974)", async () => {
     setup({
       readOnly: false,
       recentItems: [

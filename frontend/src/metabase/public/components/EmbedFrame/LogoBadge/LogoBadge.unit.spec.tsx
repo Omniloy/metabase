@@ -3,7 +3,7 @@ import { screen, render } from "__support__/ui";
 import { LogoBadge } from ".";
 
 describe("LogoBadge", () => {
-  it("should render Powered by Metabase footer", () => {
+  it("should render Powered by Omniloy footer", () => {
     setup();
 
     expect(screen.getByText("Powered by")).toBeInTheDocument();

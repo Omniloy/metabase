@@ -185,7 +185,7 @@ const elements = [
     value: null,
     is_env_setting: false,
     env_name: "MB_LDAP_GROUP_MAPPINGS",
-    description: "JSON containing LDAP to Metabase group mappings.",
+    description: "JSON containing LDAP to Omniloy group mappings.",
     default: {},
     originalValue: null,
   },

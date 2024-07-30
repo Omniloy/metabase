@@ -85,6 +85,7 @@ const getRoutes = (store, CanAccessSettings, IsAdmin) => (
         component={createAdminRouteGuard("databases")}
       >
         <IndexRoute component={DatabaseListApp} />
+        frontend/src/metabase/admin/routes.jsx
         <Route path="create" component={DatabaseEditApp} />
         <Route path=":databaseId" component={DatabaseEditApp} />
       </Route>
