@@ -4,7 +4,9 @@ ENV FC_LANG=en-US LC_CTYPE=en_US.UTF-8
 
 ARG GIT_COMMIT_SHA
 ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
-
+ENV MB_DB_CONNECTION_URI=jdbc:postgresql://postgres.msorwfzplluwupbjwlvb:hMhOIYDqXj0v2Qap@aws-0-eu-west-2.pooler.supabase.com:6543/postgres
+ENV MB_DB_USER: postgres.egqfyntdiprfbafejaml
+ENV MB_DB_PASS: hMhOIYDqXj0v2Qap
 # dependencies
 RUN apk add -U bash fontconfig curl font-noto font-noto-arabic font-noto-hebrew font-noto-cjk java-cacerts && \
     apk upgrade && \
