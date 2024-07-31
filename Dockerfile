@@ -33,9 +33,9 @@ RUN INTERACTIVE=false CI=true bin/build.sh
 FROM --platform=linux/amd64 eclipse-temurin:11-jre-alpine as runner
 
 ENV FC_LANG en-US LC_CTYPE en_US.UTF-8
-ENV MB_DB_CONNECTION_URI=jdbc:postgresql://postgres.msorwfzplluwupbjwlvb:hMhOIYDqXj0v2Qap@aws-0-eu-west-2.pooler.supabase.com:6543/postgres
-ENV MB_DB_USER: postgres.egqfyntdiprfbafejaml
-ENV MB_DB_PASS: hMhOIYDqXj0v2Qap
+ENV MB_DB_CONNECTION_URI=postgresql://postgres.egqfyntdiprfbafejaml:Te77ii9rsBBmyX14@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
+ENV MB_DB_USER=postgres.egqfyntdiprfbafejaml
+ENV MB_DB_PASS=Te77ii9rsBBmyX14
 # dependencies
 RUN apk add -U bash fontconfig curl font-noto font-noto-arabic font-noto-hebrew font-noto-cjk java-cacerts && \
     apk upgrade && \
