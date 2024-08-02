@@ -7,6 +7,11 @@ ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
 ENV MB_DB_CONNECTION_URI=postgresql://postgres.egqfyntdiprfbafejaml:Te77ii9rsBBmyX14@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
 ENV MB_DB_USER=postgres.egqfyntdiprfbafejaml
 ENV MB_DB_PASS=Te77ii9rsBBmyX14
+ENV MB_EMAIL_SMTP_PASSWORD="zsjj hriy wxth oltt"
+ENV MB_EMAIL_SMTP_USERNAME=mar.pujadas@omniloy.com
+ENV MB_EMAIL_SMTP_SECURITY=tls
+ENV MB_EMAIL_SMTP_HOST=smtp.google.com
+ENV MB_EMAIL_SMTP_PORT=587
 # dependencies
 RUN apk add -U bash fontconfig curl font-noto font-noto-arabic font-noto-hebrew font-noto-cjk java-cacerts && \
     apk upgrade && \
