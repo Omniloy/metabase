@@ -11982,7 +11982,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} prijal pozvanie do Omniloy"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] Žiadosť o obnovenie hesla"
 
 #: src/metabase/email/messages.clj
@@ -17291,7 +17291,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} prijal (a) svoje pozvanie {1}"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Žiadosť o obnovenie hesla"
 
 #: metabase/email/messages.clj:249

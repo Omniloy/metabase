@@ -11955,7 +11955,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0}님이 Omniloy 초대를 수락했습니다."
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] 비밀번호 재설정 요청"
 
 #: src/metabase/email/messages.clj
@@ -17232,7 +17232,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0}이(가) {1} 초대를 수락했습니다."
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] 암호 재설정 요청"
 
 #: metabase/email/messages.clj:249

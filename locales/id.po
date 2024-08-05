@@ -11943,7 +11943,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} menerima undangan metabase mereka"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] Permintaan Reset Kata Sandi"
 
 #: src/metabase/email/messages.clj
@@ -17218,7 +17218,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} menerima undangan {1} mereka"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Permintaan Reset Kata Sandi"
 
 #: metabase/email/messages.clj:249

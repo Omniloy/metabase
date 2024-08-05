@@ -13792,8 +13792,8 @@ msgstr "{0} قبلوا دعوة قاعدة التعريف الخاصة بهم"
 
 #: src/metabase/email/messages.clj
 #, fuzzy
-msgid "[Omniloy] Password Reset Request"
-msgstr "[قاعدة وصفية] طلب إعادة تعيين كلمة المرور"
+msgid "Omniloy Password Reset Request"
+msgstr "طلب إعادة تعيين كلمة المرور"
 
 #: src/metabase/email/messages.clj
 #, fuzzy
@@ -20269,7 +20269,7 @@ msgstr "{0} قبلوا دعوتهم {1}"
 
 #: metabase/email/messages.clj:184
 #, fuzzy
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] طلب إعادة تعيين كلمة المرور"
 
 #: metabase/email/messages.clj:249

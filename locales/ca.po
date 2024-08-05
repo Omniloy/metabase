@@ -11957,7 +11957,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} ha acceptat la teva invitació de Omniloy"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] Sol·licitud de recuperació de la contrasenya"
 
 #: src/metabase/email/messages.clj
@@ -17240,7 +17240,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} ha acceptat la invitació de {1}"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Sol·licituds per restablir la contrasenya"
 
 #: metabase/email/messages.clj:249
