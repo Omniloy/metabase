@@ -20981,7 +20981,7 @@ msgid "{0} accepted their {1} invite"
 msgstr ""
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr ""
 
 #: metabase/email/messages.clj:704

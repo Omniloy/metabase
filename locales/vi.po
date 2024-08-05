@@ -11931,7 +11931,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} đã chấp nhận lời mời Omniloy của họ"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] Yêu cầu cài đặt lại mật khẩ"
 
 #: src/metabase/email/messages.clj
@@ -17204,7 +17204,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} đã chấp nhận lời mời {1} của họ"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Yêu cầu đặt lại mật khẩu"
 
 #: metabase/email/messages.clj:249

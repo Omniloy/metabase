@@ -11956,7 +11956,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} pieņēma viņu Metabāzes ielūgumu"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Metabāze] Paroles atiestatīšanas pieprasījums"
 
 #: src/metabase/email/messages.clj
@@ -17256,7 +17256,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} pieņēma viņu {1} ielūgumu"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Paroles atiestatīšanas pieprasījums"
 
 #: metabase/email/messages.clj:249

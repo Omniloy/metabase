@@ -12007,7 +12007,7 @@ msgid "{0} accepted their Omniloy invite"
 msgstr "{0} принял приглашение в Omniloy"
 
 #: src/metabase/email/messages.clj
-msgid "[Omniloy] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[Omniloy] Запрос на сброс пароля"
 
 #: src/metabase/email/messages.clj
@@ -17312,7 +17312,7 @@ msgid "{0} accepted their {1} invite"
 msgstr "{0} принял их {1} приглашение"
 
 #: metabase/email/messages.clj:184
-msgid "[{0}] Password Reset Request"
+msgid "Omniloy Password Reset Request"
 msgstr "[{0}] Запрос на сброс пароля"
 
 #: metabase/email/messages.clj:249

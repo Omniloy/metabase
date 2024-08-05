@@ -177,7 +177,7 @@
                               :adminEmail       (public-settings/admin-email)
                               :adminEmailSet    (boolean (public-settings/admin-email))}))]
     (email/send-message!
-     {:subject      (trs "[{0}] Password Reset Request" (app-name-trs))
+     {:subject      (trs "Omniloy Password Reset Request")
       :recipients   [email]
       :message-type :html
       :message      message-body})))
