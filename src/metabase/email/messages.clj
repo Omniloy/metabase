@@ -61,7 +61,7 @@
   (stencil-loader/set-cache (cache/ttl-cache-factory {} :ttl 0)))
 
 (defn- logo-url []
-  (let [default-url "app/assets/img/omniloy_logo.png"
+  (let [default-url "app/assets/img/omniloy_logo.svg"
         url (public-settings/application-logo-url)]
     (if (= url default-url)
       url
