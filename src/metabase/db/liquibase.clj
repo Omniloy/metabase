@@ -353,7 +353,25 @@
 (defn migrate-up-if-needed!
   "Run any unrun `liquibase` migrations, if needed."
   [^Liquibase liquibase ^DataSource data-source]
-  (log/info "Checking if Database has unrun migrations..."))
+  (log/info "Checking if Database has unrun migrations...")
+    (if (seq (unrun-migrations data-source))
+    (do
+     (log/info "Database has unrun migrations. Checking if migration lock is taken...")
+     (with-scope-locked liquibase
+      ;; while we were waiting for the lock, it was possible that another instance finished the migration(s), so make
+      ;; sure something still needs to be done...
+      (let [to-run-migrations      (unrun-migrations data-source)
+            unrun-migrations-count (count to-run-migrations)]
+        (if (pos? unrun-migrations-count)
+          (let [^Contexts contexts nil
+                start-time         (System/currentTimeMillis)]
+            (log/infof "Running %s migrations ..." unrun-migrations-count)
+            (doseq [^ChangeSet change to-run-migrations]
+              (log/tracef "To run migration %s" (.getId change)))
+            (.update liquibase contexts)
+            (log/infof "Migration complete in %s" (u/format-milliseconds (- (System/currentTimeMillis) start-time))))
+          (log/info "Migration lock cleared, but nothing to do here! Migrations were finished by another instance.")))))
+    (log/info "No unrun migrations found."))))
 
 
 (defn update-with-change-log
