@@ -61,15 +61,11 @@
   (stencil-loader/set-cache (cache/ttl-cache-factory {} :ttl 0)))
 
 (defn- logo-url []
-  (let [url (public-settings/application-logo-url)]
-    (cond
-      (= url "app/assets/img/logo.svg") "http://static.metabase.com/email_logo.png"
-
-      :else nil)))
-      ;; NOTE: disabling whitelabeled URLs for now since some email clients don't render them correctly
-      ;; We need to extract them and embed as attachments like we do in metabase.pulse.render.image-bundle
-      ;; (data-uri-svg? url)               (themed-image-url url color)
-      ;; :else                             url
+  (let [default-url "app/assets/img/omniloy_logo.png"
+        url (public-settings/application-logo-url)]
+    (if (= url default-url)
+      url
+      default-url)))
 
 (defn- icon-bundle
   "Bundle an icon.
@@ -127,7 +123,7 @@
                                                   :logoHeader    true
                                                   :sentFromSetup sent-from-setup?}))]
     (email/send-message!
-     {:subject      (str (trs "You''re invited to join {0}''s {1}" company (app-name-trs)))
+     {:subject      (str (trs "You''re invited to join {0}" company))
       :recipients   [(:email invited)]
       :message-type :html
       :message      message-body})))

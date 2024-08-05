@@ -17192,8 +17192,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Phần mở rộng Omniloy Enterprise Edition KHÔNG TỒN TẠI."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "Bạn được mời tham gia {0} của {1}"
+msgid "You''re invited to join {0}"
+msgstr "Bạn được mời tham gia {0}"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

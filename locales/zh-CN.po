@@ -17242,8 +17242,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Omniloy 企业版扩展不存在。"
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "邀请您加入{0}的{1}"
+msgid "You''re invited to join {0}"
+msgstr "邀请您加入{0}"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

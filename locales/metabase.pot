@@ -20989,7 +20989,7 @@ msgid "Your Slack connection stopped working"
 msgstr ""
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
+msgid "You''re invited to join {0}"
 msgstr ""
 
 #: metabase/email/messages.clj:271

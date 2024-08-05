@@ -17230,8 +17230,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "برنامه های افزودنی Omniloy Enterprise Edition موجود نیستند."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "از شما دعوت شده است به {0} \"{1}\" بپیوندید"
+msgid "You''re invited to join {0}"
+msgstr "از شما دعوت شده است به {0} بپیوندید"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

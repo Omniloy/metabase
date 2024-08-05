@@ -17220,8 +17220,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Omniloy Enterprise Edition 확장은 존재하지 않습니다."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "{0}의 {1}에 초대되었습니다."
+msgid "You''re invited to join {0}"
+msgstr "{0}님이 귀하를 가입하도록 초대했습니다."
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

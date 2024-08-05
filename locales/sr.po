@@ -17263,8 +17263,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Dodaci za Metabejs Enterprise Edition NISU PRISUTNI."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "Pozvani ste da se pridružite korisnicima {0} {1}"
+msgid "You''re invited to join {0}"
+msgstr "Pozvani ste da se pridružite korisnicima {0}"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"
