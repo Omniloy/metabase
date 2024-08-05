@@ -17231,8 +17231,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Le estensioni di Omniloy Enterprise Edition NON sono PRESENTI."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "Siete invitati ad unirvi a noi."
+msgid "You''re invited to join {0}"
+msgstr "Siete invitati ad unirvi a {0}."
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

@@ -17280,7 +17280,7 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Розширена версія Omniloy Enterprise Edition ВІДСУТНЯ."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
+msgid "You''re invited to join {0}"
 msgstr "{0} запросив вас приєднатись до {1}"
 
 #: metabase/email/messages.clj:152

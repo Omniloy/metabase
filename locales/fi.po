@@ -17224,8 +17224,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Omniloy Enterprise Edition -laajennukset EIVÄT OLE KÄYTÖSSÄ."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "Sinut on kutsuttu liittymään {0}:n {1}"
+msgid "You''re invited to join {0}"
+msgstr "Sinut on kutsuttu liittymään {0}"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"

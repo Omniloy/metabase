@@ -17341,8 +17341,8 @@ msgid "Omniloy Enterprise Edition extensions are NOT PRESENT."
 msgstr "Omniloy Enterprise Edition extensions غير موجودة."
 
 #: metabase/email/messages.clj:130
-msgid "You''re invited to join {0}''s {1}"
-msgstr "تمت دعوتك للانضمام {0} '' s {1}"
+msgid "You''re invited to join {0}"
+msgstr "تمت دعوتك للانضمام {0} '' s"
 
 #: metabase/email/messages.clj:152
 msgid "{0} created a {1} account"
