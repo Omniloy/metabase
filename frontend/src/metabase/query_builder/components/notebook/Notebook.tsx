@@ -1,12 +1,12 @@
 import { t } from "ttag";
-
+import { useState } from "react";
 import { useDispatch } from "metabase/lib/redux";
 import { setUIControls } from "metabase/query_builder/actions";
 import { Box, Button } from "metabase/ui";
 import * as Lib from "metabase-lib";
 import type Question from "metabase-lib/v1/Question";
-
 import { NotebookSteps } from "./NotebookSteps";
+import WebSocketHandler from "./WebSocketHandler"; // Import the new component
 
 export type NotebookProps = {
   question: Question;
@@ -36,26 +36,21 @@ const Notebook = ({
   const dispatch = useDispatch();
 
   async function cleanupQuestion() {
-    // Converting a query to MLv2 and back performs a clean-up
     let cleanQuestion = question.setQuery(
       Lib.dropEmptyStages(question.query()),
     );
-
     if (cleanQuestion.display() === "table") {
       cleanQuestion = cleanQuestion.setDefaultDisplay();
     }
-
+    console.log("CleanUp Question");
+    console.log({ cleanQuestion });
     await updateQuestion(cleanQuestion);
   }
 
-  // visualize switches the view to the question's visualization.
   async function visualize() {
-    // Only cleanup the question if it's dirty, otherwise Metabase
-    // will incorrectly display the Save button, even though there are no changes to save.
     if (isDirty) {
       cleanupQuestion();
     }
-    // switch mode before running otherwise URL update may cause it to switch back to notebook mode
     await setQueryBuilderMode("view");
     if (isResultDirty) {
       await runQuestionQuery();
@@ -64,6 +59,8 @@ const Notebook = ({
 
   const handleUpdateQuestion = (question: Question): Promise<void> => {
     dispatch(setUIControls({ isModifiedFromNotebook: true }));
+    console.log("Question");
+    console.log({ question });
     return updateQuestion(question);
   };
 
@@ -76,13 +73,27 @@ const Notebook = ({
         readOnly={readOnly}
       />
       {hasVisualizeButton && isRunnable && (
-        <Button variant="filled" style={{ minWidth: 220 }} onClick={visualize}>
+        <Button
+          variant="filled"
+          style={{ minWidth: 220, marginRight: "1rem" }}
+          onClick={visualize}
+        >
           {t`Visualize`}
         </Button>
       )}
+
+      {/* Include the WebSocketHandler component */}
+      <WebSocketHandler
+        question={question}
+        isDirty={isDirty}
+        isRunnable={isRunnable}
+        isResultDirty={isResultDirty}
+        updateQuestion={updateQuestion}
+        runQuestionQuery={runQuestionQuery}
+        setQueryBuilderMode={setQueryBuilderMode}
+      />
     </Box>
   );
 };
 
-// eslint-disable-next-line import/no-default-export -- deprecated usage
 export default Notebook;

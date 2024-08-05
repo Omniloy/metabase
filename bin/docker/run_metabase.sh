@@ -41,6 +41,7 @@ file_env() {
 
 # Here we define which env vars are the ones that will be supported with a "_FILE" ending. We started with the ones that would contain sensitive data
 docker_setup_env() {
+     file_env 'MB_DB_CONNECTION_URI'
     file_env 'MB_DB_USER'
     file_env 'MB_DB_PASS'
     file_env 'MB_DB_CONNECTION_URI'

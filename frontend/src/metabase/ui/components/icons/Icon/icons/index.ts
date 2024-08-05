@@ -65,6 +65,8 @@ import burger_component from "./burger.svg?component";
 import burger_source from "./burger.svg?source";
 import calendar_component from "./calendar.svg?component";
 import calendar_source from "./calendar.svg?source";
+import chatAI_source from "./chatAI.svg?source";
+import chatAI_component from "./chatAI.svg?component";
 import check_component from "./check.svg?component";
 import check_source from "./check.svg?source";
 import chevrondown_component from "./chevrondown.svg?component";
@@ -510,6 +512,10 @@ export const Icons = {
   burger: {
     component: burger_component,
     source: burger_source,
+  },
+  chat: {
+    component: chatAI_component,
+    source: chatAI_source,
   },
   calendar: {
     component: calendar_component,

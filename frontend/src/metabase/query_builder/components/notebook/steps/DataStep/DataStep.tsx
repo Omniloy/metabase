@@ -18,7 +18,7 @@ export const DataStep = ({
   query,
   step,
   readOnly,
-  color,
+  color = "#509EE3",
   updateQuery,
 }: NotebookStepUiComponentProps) => {
   const { stageIndex } = step;
