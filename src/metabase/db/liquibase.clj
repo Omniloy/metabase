@@ -371,7 +371,7 @@
             (.update liquibase contexts)
             (log/infof "Migration complete in %s" (u/format-milliseconds (- (System/currentTimeMillis) start-time))))
           (log/info "Migration lock cleared, but nothing to do here! Migrations were finished by another instance.")))))
-    (log/info "No unrun migrations found."))))
+    (log/info "No unrun migrations found.")))
 
 
 (defn update-with-change-log
