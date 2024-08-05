@@ -36,7 +36,7 @@ ENV FC_LANG en-US LC_CTYPE en_US.UTF-8
 ENV MB_DB_CONNECTION_URI=postgresql://postgres.egqfyntdiprfbafejaml:Te77ii9rsBBmyX14@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
 ENV MB_DB_USER=postgres.egqfyntdiprfbafejaml
 ENV MB_DB_PASS=Te77ii9rsBBmyX14
-ENV MB_EMAIL_SMTP_PASSWORD=PassForJordi123
+ENV MB_EMAIL_SMTP_PASSWORD=sbvvnyftrwclclag
 ENV MB_EMAIL_SMTP_USERNAME=enrique.alcazar@omniloy.com
 ENV MB_EMAIL_SMTP_SECURITY=tls
 ENV MB_EMAIL_SMTP_HOST=smtp-relay.gmail.com
