@@ -80,6 +80,7 @@ export function suggestWithExtras(
   if (args.showMetabaseLinks && args.source === "") {
     suggestions.push(...(args.shortcuts ?? []));
 
+    /* TODO: Docs: see this commit
     if (args.startRule === "aggregation") {
       suggestions.push({
         footer: true,
@@ -94,7 +95,7 @@ export function suggestWithExtras(
         icon: "external",
         href: "https://www.metabase.com/docs/latest/questions/query-builder/expressions-list#functions",
       });
-    }
+    }*/
   }
 
   return {

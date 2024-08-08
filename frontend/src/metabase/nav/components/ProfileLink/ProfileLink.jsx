@@ -61,13 +61,6 @@ function ProfileLink({ adminItems, onLogout }) {
         link: "/admin",
         event: `Navbar;Profile Dropdown;Enter Admin`,
       },
-      helpLink.visible && {
-        title: t`Help`,
-        icon: null,
-        link: helpLink.href,
-        externalLink: true,
-        event: `Navbar;Profile Dropdown;About ${tag}`,
-      },
       {
         title: t`About ${applicationName}`,
         icon: null,
