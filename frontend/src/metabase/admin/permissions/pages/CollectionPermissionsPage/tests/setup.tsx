@@ -62,7 +62,7 @@ export const defaultCollections = [
 
 export const defaultRootCollection = createMockCollection({
   id: "root",
-  name: "Our analytics",
+  name: "Library",
   children: [collectionOne, collectionTwo],
 });
 

@@ -89,7 +89,7 @@ const QuestionPane = ({
         <QuestionPaneDetail>
           <QuestionPaneIcon name="collection" />
           <QuestionPaneDetailText>
-            {collection?.name ?? t`Our analytics`}
+            {collection?.name ?? t`Library`}
           </QuestionPaneDetailText>
         </QuestionPaneDetail>
         {question.lastEditInfo() && (

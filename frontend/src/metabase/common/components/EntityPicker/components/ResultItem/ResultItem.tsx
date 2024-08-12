@@ -120,6 +120,6 @@ function getParentInfo(item: ResultItemType) {
 
   return {
     icon: getIcon({ model: "collection", ...item.collection }).name,
-    name: getName(item.collection) || t`Our Analytics`,
+    name: getName(item.collection) || t`Library`,
   };
 }
