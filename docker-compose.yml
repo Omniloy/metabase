@@ -1,0 +1,25 @@
+version: '3'
+services:
+  todo-list:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - '3000'
+    depends_on:
+      - todo-list
+      - omni_test_dev-app
+      - demo_dev-app
+      - blank_street_dev-app
+    restart: always
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.todo-list-example.rule=Host(`dev.omnibase.omniloy.com`)"
+      - "traefik.http.routers.todo-list-example.entrypoints=websecure"
+      - "traefik.http.routers.todo-list-example.tls.certResolver=letsencrypt"
+      - "traefik.http.services.todo-list-example.loadbalancer.server.port=3000"
+networks:
+  dokploy-network:
+    external: true
