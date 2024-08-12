@@ -1,6 +1,6 @@
 version: '3'
 services:
-  todo-list:
+  omnibase:
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,10 +16,10 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.todo-list-example.rule=Host(`dev.omnibase.omniloy.com`)"
-      - "traefik.http.routers.todo-list-example.entrypoints=websecure"
-      - "traefik.http.routers.todo-list-example.tls.certResolver=letsencrypt"
-      - "traefik.http.services.todo-list-example.loadbalancer.server.port=3000"
+      - "traefik.http.routers.omnibase-example.rule=Host(`dev.omnibase.omniloy.com`)"
+      - "traefik.http.routers.omnibase-example.entrypoints=websecure"
+      - "traefik.http.routers.omnibase-example.tls.certResolver=letsencrypt"
+      - "traefik.http.services.omnibase-example.loadbalancer.server.port=3000"
 networks:
   dokploy-network:
     external: true
