@@ -13,9 +13,10 @@ import type { CollectionEssentials } from "metabase-types/api";
 
 import type { FilterableModel } from "./types";
 
+//TODO: Get name collections for each important collection
 export const getCollectionName = (collection: CollectionEssentials) => {
   if (isRootCollection(collection)) {
-    return t`Our analytics`;
+    return t`Library`;
   }
   return collection?.name || t`Untitled collection`;
 };

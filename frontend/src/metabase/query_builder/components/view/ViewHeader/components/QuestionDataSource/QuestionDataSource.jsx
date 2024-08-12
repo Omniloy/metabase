@@ -137,7 +137,7 @@ function SourceDatasetBreadcrumbs({ question, collection, ...props }) {
           icon={question.type() === "metric" ? "metric" : "model"}
           inactiveColor="text-light"
         >
-          {collection?.name || t`Our analytics`}
+          {collection?.name || t`Library`}
         </HeadBreadcrumbs.Badge>,
         question.isArchived() ? (
           <Tooltip

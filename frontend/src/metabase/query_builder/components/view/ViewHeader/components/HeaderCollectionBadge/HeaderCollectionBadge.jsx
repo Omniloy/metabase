@@ -13,7 +13,7 @@ export function HeaderCollectionBadge({ question }) {
   const icon = question.type();
   return (
     <HeadBreadcrumbs.Badge to={Urls.collection(collection)} icon={icon}>
-      {collection?.name || t`Our analytics`}
+      {collection?.name || t`Library`}
     </HeadBreadcrumbs.Badge>
   );
 }

@@ -72,7 +72,7 @@ function JobTableItem({ job, onRefresh }: JobTableItemProps) {
           </Link>{" "}
           {t`in`}{" "}
           <Link variant="brand" to={collectionUrl}>
-            {job.collection_name || t`Our analytics`}
+            {job.collection_name || t`Library`}
           </Link>
         </span>
       </th>
