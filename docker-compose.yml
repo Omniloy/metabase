@@ -6,11 +6,6 @@ services:
       dockerfile: Dockerfile
     expose:
       - '3000'
-    depends_on:
-      - todo-list
-      - omni_test_dev-app
-      - demo_dev-app
-      - blank_street_dev-app
     restart: always
     networks:
       - dokploy-network
