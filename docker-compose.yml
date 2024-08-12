@@ -11,7 +11,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.omnibase-example.rule=Host(`dev.omnibase.omniloy.com`)"
+      - "traefik.http.routers.omnibase-example.rule=Host(`dev.metabase.omniloy.com`)"
       - "traefik.http.routers.omnibase-example.entrypoints=websecure"
       - "traefik.http.routers.omnibase-example.tls.certResolver=letsencrypt"
       - "traefik.http.services.omnibase-example.loadbalancer.server.port=3000"
