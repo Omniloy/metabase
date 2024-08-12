@@ -21,7 +21,7 @@ export const getMockModelCacheInfo = (
     card_name: "Test Model",
 
     collection_id: "root",
-    collection_name: "Our analytics",
+    collection_name: "Library",
     collection_authority_level: null,
 
     columns: [],

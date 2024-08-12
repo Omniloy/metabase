@@ -638,7 +638,7 @@ export class NativeQueryEditor extends Component<
 
     const resultsForAce = apiResults.map(
       ({ id, name, type, collection_name }) => {
-        const collectionName = collection_name || t`Our analytics`;
+        const collectionName = collection_name || t`Library`;
         return {
           name: `${id}-${slugg(name)}`,
           value: `${id}-${slugg(name)}`,

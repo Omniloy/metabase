@@ -4,7 +4,7 @@ export const DEFAULT_COLLECTION_COLOR_ALIAS = "brand";
 
 export const ROOT_COLLECTION = {
   id: "root" as const,
-  name: t`Our analytics`,
+  name: t`Library`,
   location: "",
   path: [],
   is_personal: false,

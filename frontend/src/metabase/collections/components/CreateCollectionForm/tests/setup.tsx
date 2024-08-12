@@ -16,7 +16,7 @@ import CreateCollectionForm from "../CreateCollectionForm";
 
 const ROOT_COLLECTION = createMockCollection({
   id: "root",
-  name: "Our analytics",
+  name: "Library",
   can_write: true,
 });
 
