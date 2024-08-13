@@ -6,7 +6,6 @@ import { Box, Button } from "metabase/ui";
 import * as Lib from "metabase-lib";
 import type Question from "metabase-lib/v1/Question";
 import { NotebookSteps } from "./NotebookSteps";
-import WebSocketHandler from "./WebSocketHandler"; // Import the new component
 
 export type NotebookProps = {
   question: Question;
@@ -81,17 +80,6 @@ const Notebook = ({
           {t`Visualize`}
         </Button>
       )}
-
-      {/* Include the WebSocketHandler component */}
-      <WebSocketHandler
-        question={question}
-        isDirty={isDirty}
-        isRunnable={isRunnable}
-        isResultDirty={isResultDirty}
-        updateQuestion={updateQuestion}
-        runQuestionQuery={runQuestionQuery}
-        setQueryBuilderMode={setQueryBuilderMode}
-      />
     </Box>
   );
 };

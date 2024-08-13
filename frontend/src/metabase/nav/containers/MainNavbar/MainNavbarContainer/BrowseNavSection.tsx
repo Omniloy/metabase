@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import { c, t } from "ttag";
 import { useUserSetting } from "metabase/common/hooks";
 import { useHasModels } from "metabase/common/hooks/use-has-models";
@@ -8,11 +7,6 @@ import CS from "metabase/css/core/index.css";
 import { Flex, Skeleton } from "metabase/ui";
 import { PaddedSidebarLink, SidebarHeading } from "../MainNavbar.styled";
 import type { SelectedItem } from "../types";
-import Modal from "metabase/components/Modal";
-import Notebook from "metabase/query_builder/components/notebook/Notebook";
-import Question from "metabase-lib/v1/Question";
-import { DEFAULT_QUERY, SAMPLE_METADATA } from "metabase-lib/test-helpers";
-import { runQuestionQuery } from "metabase/services";
 
 export const BrowseNavSection = ({
   nonEntityItem,
@@ -37,31 +31,6 @@ export const BrowseNavSection = ({
   const [expandBrowse = true, setExpandBrowse] = useUserSetting(
     "expand-browse-in-nav",
   );
-
-  const defaultQuestion = useMemo(() => {
-    return Question.create({
-      databaseId: 1,
-      name: "Sample Question",
-      type: "query",
-      display: "table",
-      visualization_settings: {},
-      dataset_query: DEFAULT_QUERY,
-      metadata: SAMPLE_METADATA,
-    });
-  }, []);
-
-  const updateQuestion = async (updatedQuestion: Question) => {
-    console.log("Update Question:", updatedQuestion);
-  };
-
-  const setQueryBuilderMode = (mode: string) => {
-    console.log("Set Query Builder Mode:", mode);
-  };
-
-  const [isModalOpen, setModalOpen] = useState(false);
-
-  const openModal = () => setModalOpen(true);
-  const closeModal = () => setModalOpen(false);
 
   if (noModelsExist && !hasDataAccess) {
     return null;
@@ -123,30 +92,7 @@ export const BrowseNavSection = ({
         >
           {t`Chat`}
         </PaddedSidebarLink>
-        {/* <PaddedSidebarLink children={t`Chat`} icon="chat" onClick={openModal} /> */}
       </CollapseSection>
-
-      {isModalOpen && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          full={false}
-          title={"OMNILOY CHAT"}
-        >
-          <Notebook
-            question={defaultQuestion}
-            isDirty={true}
-            isRunnable={true}
-            isResultDirty={true}
-            reportTimezone="UTC"
-            hasVisualizeButton={true}
-            updateQuestion={updateQuestion}
-            runQuestionQuery={runQuestionQuery}
-            setQueryBuilderMode={setQueryBuilderMode}
-            readOnly={undefined}
-          />
-        </Modal>
-      )}
     </>
   );
 };

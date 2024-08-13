@@ -1,19 +1,9 @@
 import { useState } from "react";
-import { useDispatch } from "metabase/lib/redux";
-import { setUIControls } from "metabase/query_builder/actions";
 import { Box, Button } from "metabase/ui";
 import Input from "metabase/core/components/Input";
 import { t } from "ttag";
 import useWebSocket from "./useWebSocket"; // Import the WebSocket hook
-import * as Lib from "metabase-lib";
-import { CardApi } from "metabase/services";
 import type Question from "metabase-lib/v1/Question";
-import type {
-  StructuredDatasetQuery,
-  Aggregation,
-  ConcreteFieldReference,
-  Card,
-} from "metabase-types/api";
 import ChatMessageList from "../ChatComponents/ChatMessageList";
 
 export type WebSocketHandlerProps = {
@@ -26,19 +16,13 @@ export type WebSocketHandlerProps = {
   setQueryBuilderMode: (mode: string) => void;
 };
 
-const WebSocketHandler = ({
-  question,
-  updateQuestion,
-}: WebSocketHandlerProps) => {
-  const dispatch = useDispatch();
+const WebSocketHandler = ({ id, setId }: any) => {
   const [inputValue, setInputValue] = useState(""); // State to store input value
   const [messages, setMessages] = useState<any>([]);
-  const [card, setCard] = useState<Card | null>(null); // State to store card content
 
   const { ws, isConnected } = useWebSocket(
     "ws://localhost:8090",
     async (e: any) => {
-      console.log("🚀 ~ e:", e);
       if (e.data) {
         const data = JSON.parse(e.data);
         switch (data.type) {
@@ -73,26 +57,7 @@ const WebSocketHandler = ({
 
   const handleGetDatasetQuery = async (func: any) => {
     console.log("🚀 ~ handleGetDatasetQuery ~ func:", func.arguments.cardId);
-    try {
-      const [fetchedCard] = await Promise.all([
-        CardApi.get({ cardId: func.arguments.cardId }),
-      ]);
-      console.log("🚀 ~ getCardContent ~ card:", fetchedCard);
-      setCard(fetchedCard);
-
-      const getDatasetQuery = fetchedCard?.dataset_query;
-      if (fetchedCard) {
-        const updatedQuestion = question
-          .setDatasetQuery(getDatasetQuery)
-          .setDisplay("table")
-          .setSettings({});
-        console.log("Updated Question with new dataset_query content");
-        console.log({ updatedQuestion });
-        await updateQuestion(updatedQuestion);
-      }
-    } catch (error) {
-      console.error("Error fetching card content:", error);
-    }
+    setId(func.arguments.cardId);
   };
 
   const addServerMessage = (message: any, type: any) => {
