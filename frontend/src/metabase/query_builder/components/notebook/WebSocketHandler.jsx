@@ -1,28 +1,16 @@
 
 import { useState } from "react";
-import { useSelector, useDispatch } from "metabase/lib/redux";
+import { useDispatch } from "metabase/lib/redux";
 import { Box, Button, Icon } from "metabase/ui";
 import Input from "metabase/core/components/Input";
-import { t } from "ttag";
 import useWebSocket from "./useWebSocket";
-import {
-  getIsDirty,
-  getIsRunnable,
-  getIsResultDirty,
-  getQuestion,
-  getVisualizationSettings,
-  getRawSeries,
-  getUiControls,
-  getQueryResults
-} from "metabase/query_builder/selectors";
 import ChatMessageList from "../ChatComponents/ChatMessageList";
 import { CardApi } from "metabase/services";
 import Question from "metabase-lib/v1/Question";
 import VisualizationResult from "../VisualizationResult";
-import QueryVisualization from "../QueryVisualization";
-import { cardApi } from "metabase/api";
 import { loadMetadataForCard } from "metabase/questions/actions";
 import { push } from "react-router-redux";
+import Modal from "metabase/components/Modal";
 
 const WebSocketHandler = () => {
   const [inputValue, setInputValue] = useState("");
@@ -30,24 +18,21 @@ const WebSocketHandler = () => {
   const [card, setCard] = useState(null);
   const [result, setResult] = useState(null);
   const [defaultQuestion, setDefaultQuestion] = useState(null);
-  const queryResults = useSelector(getQueryResults);
-  const isDirty = useSelector(getIsDirty);
-  const rawSeries = useSelector(getRawSeries);
+  const [dataInfo, setDataInfo] = useState("");
   const dispatch = useDispatch();
-
-  // WebSocket connection setup
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [id, setId] = useState(0);
   const { ws, isConnected } = useWebSocket(
     "ws://localhost:8090",
     async e => {
       if (e.data) {
         const data = JSON.parse(e.data);
-        console.log("🚀 ~ WebSocketHandler ~ data:", data)
         switch (data.type) {
           case "tool":
             await handleFunctionalityMessages(data.functions);
             break;
           case "result":
-            await handleDefaultMessage(data.functions);
+            await handleResultMessage(data);
             break;
           default:
             handleDefaultMessage(data);
@@ -60,9 +45,15 @@ const WebSocketHandler = () => {
     () => console.log("WebSocket opened"),
   );
 
-  const redirect = () => {
-    dispatch(push("/question/89"));
-  }
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+
 
   const handleFunctionalityMessages = async functions => {
     functions.forEach(async func => {
@@ -78,13 +69,11 @@ const WebSocketHandler = () => {
   };
 
   const handleGetDatasetQuery = async func => {
+    setId(func.arguments.cardId);
     try {
       const fetchedCard = await CardApi.get({ cardId: func.arguments.cardId });
-      const pivotCard = await CardApi.query_pivot({ cardId: func.arguments.cardId });
       const queryCard = await CardApi.query({ cardId: func.arguments.cardId });
-      console.log("🚀 ~ handleGetDatasetQuery ~ queryCard:", queryCard)
       const cardMetadata = await dispatch(loadMetadataForCard(fetchedCard));
-      console.log("🚀 ~ handleGetDatasetQuery ~ cardMetadata:", cardMetadata)
       setResult(queryCard);
       const getDatasetQuery = fetchedCard?.dataset_query;
       const defaultQuestionTest = Question.create({
@@ -110,6 +99,14 @@ const WebSocketHandler = () => {
       "text",
     );
   };
+
+  const handleResultMessage = data => {
+    setDataInfo(data.message);
+  };
+
+  const redirect = () => {
+    dispatch(push(`/question/${id}`));
+  }
 
   const addServerMessage = (message, type) => {
     setMessages(prevMessages => [
@@ -155,77 +152,113 @@ const WebSocketHandler = () => {
     }
   };
   return (
-    <Box
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "80vh",  // Full height of the viewport
-        width: "100%",
-      }}
-    >
-      <div
+    <>
+      <Box
         style={{
-          flex: card ? "0 1 auto" : "1 1 auto", // If there is a card, allow space for the visualization, otherwise let chat occupy more space
-          overflowY: "auto",
-          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          height: "80vh",
+          width: "100%",
         }}
       >
-        <ChatMessageList messages={messages} />
-      </div>
-
-      {card && (
         <div
           style={{
-            flex: "1 0 50%",  // Allow visualization to take up half of the remaining space
+            flex: card ? "0 1 auto" : "1 1 auto",
+            overflowY: "auto",
             padding: "16px",
-            overflow: "hidden",
-            minHeight: "400px", // Minimum height for the visualization
+            backgroundColor: "#FFF",
+            borderRadius: card ? "0 0 12px 12px" : "12px",
           }}
         >
-          <VisualizationResult
-            question={defaultQuestion}
-            isDirty={false}
-            queryBuilderMode={"view"}
-            result={result}
-            className={"chat__visualization___3Z6Z-"}
-            rawSeries={[{ card, data: result && result.data }]}
-            isRunning={false} // Adjust according to your logic
-            navigateToNewCardInsideQB={null} // Placeholder or actual function
-            onNavigateBack={() => console.log('back')} // Placeholder or actual function
-            timelineEvents={[]}
-            selectedTimelineEventIds={[]}
-          />
+          <ChatMessageList messages={messages} />
         </div>
-      )}
 
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "16px",
-          backgroundColor: "#FFF",
-          borderTop: "1px solid #E0E0E0",
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Input
-          id="1"
-          type="text"
-          fullWidth
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          style={{ marginRight: "8px" }}
-        />
-        <Button
-          variant="filled"
-          disabled={!isConnected}
-          onClick={sendMessage}
-          style={{ borderRadius: "12px", padding: "8px" }}
+        {card && (
+          <>
+            <div
+              style={{
+                flex: "1 0 50%",
+                padding: "16px",
+                overflow: "hidden",
+                minHeight: "400px",
+              }}
+            >
+              <VisualizationResult
+                question={defaultQuestion}
+                isDirty={false}
+                queryBuilderMode={"view"}
+                result={result}
+                className={"chat__visualization___3Z6Z-"}
+                rawSeries={[{ card, data: result && result.data }]}
+                isRunning={false}
+                navigateToNewCardInsideQB={null}
+                onNavigateBack={() => console.log('back')}
+                timelineEvents={[]}
+                selectedTimelineEventIds={[]}
+              />
+            </div>
+            <Button
+              variant="outlined"
+              style={{ width: 200, cursor: "pointer", border: "1px solid #E0E0E0", marginBottom: "1rem", text: "center", color: "#000", marginLeft: "auto", marginRight: 0 }}
+              onClick={openModal}
+            >
+              Review & Save
+            </Button>
+          </>
+
+        )}
+
+        <div
+          style={{
+            flexShrink: 0,
+            padding: "16px",
+            backgroundColor: "#FFF",
+            borderTop: "1px solid #E0E0E0",
+            display: "flex",
+            alignItems: "center",
+          }}
         >
-          <Icon size={28} style={{ marginTop: "4px", marginBottom: "auto", padding: "0px", paddingLeft: "4px", paddingRight: "4px" }} name="sendChat" />
-        </Button>
-      </div>
-    </Box>
+          <Input
+            id="1"
+            type="text"
+            fullWidth
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            style={{ marginRight: "8px" }}
+          />
+          <Button
+            variant="filled"
+            disabled={!isConnected}
+            onClick={sendMessage}
+            style={{ borderRadius: "12px", padding: "8px" }}
+          >
+            <Icon size={28} style={{ marginTop: "4px", marginBottom: "auto", padding: "0px", paddingLeft: "4px", paddingRight: "4px" }} name="sendChat" />
+          </Button>
+        </div>
+      </Box>
+      {isModalOpen && (
+        <Modal isOpen={isModalOpen} onClose={closeModal}>
+          <div style={{ padding: "20px" }}>
+            <h2 style={{ marginBottom: "10px" }}>Save question</h2>
+            {dataInfo !== "" && (
+              <>
+                <strong>Data generation insight:</strong>
+                <p>{dataInfo}</p>
+              </>
+            )}
+            <p>Please go to builder to review and save your question.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+              <Button variant="outlined" style={{ marginRight: "10px" }} onClick={closeModal}>
+                Cancel
+              </Button>
+              <Button variant="filled" onClick={() => { redirect(); closeModal(); }}>
+                Go to builder
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 };
 
