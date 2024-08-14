@@ -88,9 +88,9 @@ export const BrowseNavSection = ({
           url={BROWSE_CHAT}
           isSelected={nonEntityItem?.url?.startsWith(BROWSE_CHAT)}
           onClick={onItemSelect}
-          aria-label={t`Chat`}
+          aria-label={t`Ask Omni`}
         >
-          {t`Chat`}
+          {t`Ask Omni`}
         </PaddedSidebarLink>
       </CollapseSection>
     </>

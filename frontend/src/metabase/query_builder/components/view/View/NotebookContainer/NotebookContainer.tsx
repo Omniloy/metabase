@@ -37,7 +37,6 @@ export const NotebookContainer = ({
   runQuestionQuery,
   setQueryBuilderMode,
 }: NotebookContainerProps) => {
-  console.log("🚀Notebookcontainer ~ question:", question);
   const [shouldShowNotebook, setShouldShowNotebook] = useState(isOpen);
   const { width: windowWidth } = useWindowSize();
 

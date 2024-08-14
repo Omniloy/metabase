@@ -13,15 +13,6 @@ import { useDispatch } from "react-redux";
 import WebSocketHandler from "metabase/query_builder/components/notebook/WebSocketHandler";
 
 export const BrowseChat = () => {
-  const [id, setId] = useState<number>(0);
-  const dispatch = useDispatch();
-
-  const redirect = () => {
-    if (id && id !== 0) {
-      dispatch(push(`/question/${id}`));
-    }
-  };
-
   return (
     <BrowseContainer>
       <BrowseHeader>
@@ -36,7 +27,7 @@ export const BrowseChat = () => {
             <Title order={1} color="text-dark">
               <Group spacing="sm">
                 <Icon size={24} color={color("brand")} name="chat" />
-                {t`Chat`}
+                {t`Ask a question`}
               </Group>
             </Title>
           </Flex>
@@ -44,18 +35,8 @@ export const BrowseChat = () => {
       </BrowseHeader>
       <BrowseMain>
         <BrowseSection>
-          <Stack mb="lg" spacing="md" w="100%">
-            <WebSocketHandler id={id} setId={setId} />
-            {id !== 0 && (
-              <Button
-                variant="filled"
-                disabled={id === 0}
-                style={{ minWidth: 100 }}
-                onClick={redirect}
-              >
-                {t`Redirect`}
-              </Button>
-            )}
+          <Stack mb="lg" spacing="xs" w="100%">
+            <WebSocketHandler />
           </Stack>
         </BrowseSection>
       </BrowseMain>
