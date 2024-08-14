@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useSelector, useDispatch } from "metabase/lib/redux";
-import { Box, Button } from "metabase/ui";
+import { Box, Button, Icon } from "metabase/ui";
 import Input from "metabase/core/components/Input";
 import { t } from "ttag";
 import useWebSocket from "./useWebSocket";
@@ -41,13 +41,16 @@ const WebSocketHandler = () => {
     async e => {
       if (e.data) {
         const data = JSON.parse(e.data);
+        console.log("🚀 ~ WebSocketHandler ~ data:", data)
         switch (data.type) {
           case "tool":
             await handleFunctionalityMessages(data.functions);
             break;
+          case "result":
+            await handleDefaultMessage(data.functions);
+            break;
           default:
-            // handleDefaultMessage(data);
-            await handleGetDatasetQuery(data);
+            handleDefaultMessage(data);
             break;
         }
       }
@@ -76,9 +79,9 @@ const WebSocketHandler = () => {
 
   const handleGetDatasetQuery = async func => {
     try {
-      const fetchedCard = await CardApi.get({ cardId: 89 });
-      const pivotCard = await CardApi.query_pivot({ cardId: 89 });
-      const queryCard = await CardApi.query({ cardId: 89 });
+      const fetchedCard = await CardApi.get({ cardId: func.arguments.cardId });
+      const pivotCard = await CardApi.query_pivot({ cardId: func.arguments.cardId });
+      const queryCard = await CardApi.query({ cardId: func.arguments.cardId });
       console.log("🚀 ~ handleGetDatasetQuery ~ queryCard:", queryCard)
       const cardMetadata = await dispatch(loadMetadataForCard(fetchedCard));
       console.log("🚀 ~ handleGetDatasetQuery ~ cardMetadata:", cardMetadata)
@@ -88,7 +91,7 @@ const WebSocketHandler = () => {
         databaseId: 1,
         name: fetchedCard.name,
         type: "query",
-        display: "bar",
+        display: fetchedCard.display,
         visualization_settings: {},
         dataset_query: getDatasetQuery,
         metadata: cardMetadata.payload.entities
@@ -156,14 +159,13 @@ const WebSocketHandler = () => {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%",
+        height: "80vh",  // Full height of the viewport
         width: "100%",
-        marginTop: "1rem",
       }}
     >
       <div
         style={{
-          flex: "0 1 auto", // Chat messages section can grow and shrink
+          flex: card ? "0 1 auto" : "1 1 auto", // If there is a card, allow space for the visualization, otherwise let chat occupy more space
           overflowY: "auto",
           padding: "16px",
         }}
@@ -171,14 +173,13 @@ const WebSocketHandler = () => {
         <ChatMessageList messages={messages} />
       </div>
 
-
       {card && (
         <div
           style={{
-            flex: "0 1 auto", // Visualization should take the remaining space
+            flex: "1 0 50%",  // Allow visualization to take up half of the remaining space
             padding: "16px",
-            height: "800px", // Minimum height for the visualization
             overflow: "hidden",
+            minHeight: "400px", // Minimum height for the visualization
           }}
         >
           <VisualizationResult
@@ -194,23 +195,12 @@ const WebSocketHandler = () => {
             timelineEvents={[]}
             selectedTimelineEventIds={[]}
           />
-          {/* <QueryVisualization question={defaultQuestion} isRunning={false} className={"index__spread___bGqBG"} isResultDirty={false} isNativeEditorOpen={true} result={result} /> */}
-
         </div>
       )}
-      {card && (
 
-        <Button
-          variant="outlined"
-          style={{ width: 200, cursor: "pointer", border: "1px solid #E0E0E0", marginBottom: "1rem", text: "center", color: "#000", marginLeft: "auto", marginRight: 0 }}
-          onClick={redirect}
-        >
-          {t`Verify results`}
-        </Button>
-      )}
       <div
         style={{
-          flex: "0 0 auto", // Input and buttons should not grow, only shrink if needed
+          flexShrink: 0,
           padding: "16px",
           backgroundColor: "#FFF",
           borderTop: "1px solid #E0E0E0",
@@ -229,10 +219,10 @@ const WebSocketHandler = () => {
         <Button
           variant="filled"
           disabled={!isConnected}
-          style={{ minWidth: 100 }}
           onClick={sendMessage}
+          style={{ borderRadius: "12px", padding: "8px" }}
         >
-          {t`Send`}
+          <Icon size={28} style={{ marginTop: "4px", marginBottom: "auto", padding: "0px", paddingLeft: "4px", paddingRight: "4px" }} name="sendChat" />
         </Button>
       </div>
     </Box>

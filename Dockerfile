@@ -33,9 +33,9 @@ RUN INTERACTIVE=false CI=true bin/build.sh
 FROM --platform=linux/amd64 eclipse-temurin:11-jre-alpine as runner
 
 ENV FC_LANG en-US LC_CTYPE en_US.UTF-8
-ENV MB_DB_CONNECTION_URI=postgresql://postgres.egqfyntdiprfbafejaml:Te77ii9rsBBmyX14@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
-ENV MB_DB_USER=postgres.egqfyntdiprfbafejaml
-ENV MB_DB_PASS=Te77ii9rsBBmyX14
+ENV MB_DB_CONNECTION_URI=postgresql://postgres.fgwgxaufopvomtjlgawr:HbgguFoHqWbYIinl@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
+ENV MB_DB_USER=postgres.fgwgxaufopvomtjlgawr
+ENV MB_DB_PASS=HbgguFoHqWbYIinl
 ENV MB_EMAIL_SMTP_PASSWORD=sbvvnyftrwclclag
 ENV MB_EMAIL_SMTP_USERNAME=enrique.alcazar@omniloy.com
 ENV MB_EMAIL_SMTP_SECURITY=tls

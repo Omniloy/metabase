@@ -1,4 +1,5 @@
 import React from "react";
+import { Icon } from "metabase/ui";
 
 const Message = ({ message }) => {
   const isUser = message.sender === "user";
@@ -7,35 +8,30 @@ const Message = ({ message }) => {
     <div
       style={{
         display: "flex",
-        flexDirection: "column",
+        flexDirection: "row",
+        alignItems: "center",
         marginBottom: "16px",
-        alignItems: isUser ? "flex-end" : "flex-start",
       }}
     >
+      <Icon
+        size={24}
+        style={{
+          marginTop: "4px",
+          marginBottom: "auto",
+          padding: "2px",
+        }}
+        name={isUser ? "person" : "chat"}
+      />
       <div
         style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
+          padding: "0px 16px", // Adjust padding if needed
+          // Optional: keep if you want a subtle shadow
+          width: "90%",
+          wordWrap: "break-word",
+          color: "#333", // Ensure text color is legible
         }}
       >
-        <div
-          style={{
-            padding: "12px 16px",
-            backgroundColor: isUser ? "#E1FFE1" : "#FFF",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            width: "70%",
-            wordWrap: "break-word",
-          }}
-        >
-          <strong
-            style={{ color: "#333", display: "block", marginBottom: "4px" }}
-          >
-            {/* {isUser ? "You" : "Server"} */}
-          </strong>
-          <span style={{ color: "#333" }}>{message.text}</span>
-        </div>
+        <span style={{ fontSize: "16px" }}>{message.text}</span>
       </div>
     </div>
   );

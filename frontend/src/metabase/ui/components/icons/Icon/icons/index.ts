@@ -303,6 +303,8 @@ import search_component from "./search.svg?component";
 import search_source from "./search.svg?source";
 import section_component from "./section.svg?component";
 import section_source from "./section.svg?source";
+import sendChat_component from "./sendChat.svg?component";
+import sendChat_source from "./sendChat.svg?source";
 import segment_component from "./segment.svg?component";
 import segment_source from "./segment.svg?source";
 import share_component from "./share.svg?component";
@@ -956,6 +958,10 @@ export const Icons = {
   revert: {
     component: revert_component,
     source: revert_source,
+  },
+  sendChat: {
+    component: sendChat_component,
+    source: sendChat_source,
   },
   share: {
     component: share_component,

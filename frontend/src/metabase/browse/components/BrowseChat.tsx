@@ -25,10 +25,7 @@ export const BrowseChat = () => {
             align="center"
           >
             <Title order={1} color="text-dark">
-              <Group spacing="sm">
-                <Icon size={24} color={color("brand")} name="chat" />
-                {t`Ask a question`}
-              </Group>
+              <Group spacing="sm">{t`Ask a question`}</Group>
             </Title>
           </Flex>
         </BrowseSection>
