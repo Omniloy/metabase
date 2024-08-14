@@ -79,7 +79,7 @@ const WebSocketHandler = () => {
             setResult(queryCard);
             const getDatasetQuery = fetchedCard?.dataset_query;
             const defaultQuestionTest = Question.create({
-                databaseId: 1,
+                databaseId: 2,
                 name: fetchedCard.name,
                 type: "query",
                 display: fetchedCard.display,
