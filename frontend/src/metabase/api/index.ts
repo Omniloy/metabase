@@ -8,6 +8,7 @@ export * from "./bookmark";
 export * from "./card";
 export * from "./cloud-migration";
 export * from "./collection";
+export * from "./cube";
 export * from "./dashboard";
 export * from "./database";
 export * from "./dataset";
@@ -28,3 +29,4 @@ export * from "./task";
 export * from "./timeline";
 export * from "./timeline-event";
 export * from "./user";
+

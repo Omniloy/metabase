@@ -4,7 +4,12 @@ export type SortColumn =
   | "last_edited_by"
   | "model"
   | "collection"
-  | "description";
+  | "description"
+  | "folder"
+  | "creation date"
+  | "last update"
+  | "type"
+  | "category";
 
 export enum SortDirection {
   Asc = "asc",
