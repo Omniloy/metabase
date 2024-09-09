@@ -127,9 +127,12 @@
                                    "*:8080 ws://*:8080")
                                    (when config/is-dev?
                                    "*:8090 ws://*:8090 wss://*")
-                                 ;; CLJS REPL
+                                  ;; CLJS REPL
                                  (when config/is-dev?
-                                   "ws://*:9630")]
+                                   "ws://*:9630")
+                                 (when config/is-dev?
+                                   "http://*:3001") 
+                                  ]
                   :manifest-src ["'self'"]}]
       (format "%s %s; " (name k) (str/join " " vs))))})
 

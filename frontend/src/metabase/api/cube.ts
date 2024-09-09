@@ -1,4 +1,4 @@
-import { CubeDataResponse, GetCubeDataRequest, UpdateCubeDataRequest } from "metabase-types/api";
+import { CubeDataResponse, GetCubeDataRequest, UpdateCubeDataRequest, CreateCompanyCubeRequest } from "metabase-types/api";
 import { CubeApi } from "./cubeApi";
 import { provideCubeDataTags } from "./tags";
 import { invalidateTags, tag } from "./tags";
@@ -33,11 +33,22 @@ export const cubeDataApi = CubeApi.injectEndpoints({
                 invalidateTags(error, [
                     tag("company-name"),
                 ]),
+        }),
+        createCompany: builder.mutation<void, CreateCompanyCubeRequest>({
+            query: (newCompany) => ({
+                url: `/company/`,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: newCompany,
+            }),
         })
     })
 })
 
 export const {
     useGetCubeDataQuery,
-    useUpdateCubeDataMutation
+    useUpdateCubeDataMutation,
+    useCreateCompanyMutation
 } = cubeDataApi

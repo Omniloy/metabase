@@ -19,3 +19,14 @@ export type UpdateCubeDataRequest = {
     };
     companyName: string;
 };
+
+export type CreateCompanyCubeRequest = {
+    companyName: string;
+    databaseId: number;
+    dbHost: string;
+    dbPort: number;
+    dbName: string;
+    dbUser: string;
+    dbPass: string;
+    dbType: string;
+};
