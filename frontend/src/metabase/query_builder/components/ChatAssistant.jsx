@@ -18,7 +18,7 @@ import {
 import { useSelector } from "metabase/lib/redux";
 import { getDBInputValue, getCompanyName } from "metabase/redux/initialDb";
 import { getInitialSchema } from "metabase/redux/initialSchema";
-import { useListDatabasesQuery, useGetDatabaseMetadataWithoutParamsQuery } from "metabase/api";
+import { useListDatabasesQuery, useGetDatabaseMetadataWithoutParamsQuery, skipToken } from "metabase/api";
 import { SemanticError } from "metabase/components/ErrorPages";
 import { SpinnerIcon } from "metabase/components/LoadingSpinner/LoadingSpinner.styled";
 const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId, chatType, oldCardId, insights, initial_message }) => {
@@ -80,10 +80,9 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
         data: databaseMetadata, 
         isLoading: databaseMetadataIsLoading, 
         error: databaseMetadataIsError 
-      } = useGetDatabaseMetadataWithoutParamsQuery({ 
-        id: initialDbName, 
-        skip: !initialDbName
-      });
+      } = useGetDatabaseMetadataWithoutParamsQuery(
+        dbInputValue !== "" ? { id: dbInputValue } : skipToken
+    );
     const databaseMetadataData = databaseMetadata;
     
     useEffect(() => {
@@ -511,40 +510,64 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
                 const buffer = Buffer.from(generatedImages.data);
                 // Convert the buffer to a Base64 string
                 const base64Image = `data:image/png;base64,${buffer.toString('base64')}`;
-
-                setInsightsImg(prevInsightsImg => [...prevInsightsImg, base64Image]);
+    
+                setInsightsImg(prevInsightsImg => {
+                    // Check if the image already exists in the array
+                    if (prevInsightsImg.includes(base64Image)) {
+                        console.warn("Image already exists. Skipping insertion.");
+                        return prevInsightsImg; // Return the existing array if the image exists
+                    }
+    
+                    // Insert the new image into the insights array
+                    const updatedImages = [...prevInsightsImg, base64Image];
+    
+                    // Set visualization index and message only if a new image is added
+                    setVisualizationIndex(prevIndex => {
+                        const currentIndex = prevIndex + 1;
+                        addServerMessageWithType(
+                            `Here is your visualization`,
+                            "text",
+                            "insightImg",
+                            currentIndex
+                        );
+                        return currentIndex;
+                    });
+    
+                    return updatedImages;
+                });
             } else {
                 throw new Error('Invalid image buffer format');
             }
-            setVisualizationIndex(prevIndex => {
-                const currentIndex = prevIndex + 1;
-                addServerMessageWithType(
-                    `Here is your visualization`,
-                    "text",
-                    "insightImg",
-                    currentIndex
-                );
-                return currentIndex;
-            });
         } catch (error) {
             console.error("Error getting image", error);
         }
-    }
+    };
+    
 
     const handleGetText = async func => {
         const { generatedTexts } = func.arguments;
         try {
-            setInsightTextIndex(prevIndex => {
-                const currentIndex = prevIndex + 1;
-                addServerMessageWithType(
-                    "Current Step:",
-                    "text",
-                    "insightText",
-                    currentIndex
-                );
-                return currentIndex;
+            setInsightsText(prevInsightsText => {
+                if (prevInsightsText.includes(generatedTexts.value)) {
+                    console.warn("Text already exists. Skipping insertion.");
+                    return prevInsightsText; // Return the existing array if the text exists
+                }
+                
+                // If the text doesn't exist, proceed with insertion
+                setInsightTextIndex(prevIndex => {
+                    const currentIndex = prevIndex + 1;
+                    addServerMessageWithType(
+                        "Current Step:",
+                        "text",
+                        "insightText",
+                        currentIndex
+                    );
+                    return currentIndex;
+                });
+    
+                // Insert the new text into the insights array
+                return [...prevInsightsText, generatedTexts.value];
             });
-            setInsightsText(prevInsightsText => [...prevInsightsText, generatedTexts.value]);
             setIsLoading(false);
             removeLoadingMessage();
         } catch (error) {
@@ -555,7 +578,16 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
     const handleGetCode = async func => {
         const { generatedCodes } = func.arguments;
         try {
-            setInsightsCode(prevCode => [...prevCode, generatedCodes]);
+            // Check if generatedCodes already exists in prevCode
+            setInsightsCode(prevCode => {
+                if (prevCode.includes(generatedCodes)) {
+                    console.warn("Code already exists. Skipping insertion.");
+                    return prevCode; // Return the existing array if the code exists
+                }
+    
+                // If the code doesn't exist, proceed with insertion
+                return [...prevCode, generatedCodes];
+            });
         } catch (error) {
             console.error("Error getting code", error);
         }
@@ -579,29 +611,21 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
     };
 
     const handleResultMessage = data => {
-        const hasError =
-            data.message.toLowerCase().includes("error") ||
-            data.message.toLowerCase().includes("failed");
-        if (data.type === "result" && !hasError) {
             setVisualizationIndex((prevIndex) => {
                 const currentIndex = prevIndex + 1;
                 addServerMessageWithInfo(
-                    data.message || "Received a message from the server.",
+                    data.functions.payload.message || data.message || "Received a message from the server.",
                     "text",
                     true,
                     currentIndex
                 );
                 return currentIndex;
             });
-        } else {
-            addServerMessage(
-                data.message || "Received a message from the server.",
-                "text",
-            )
-        }
-        if (hasError) {
-            setError(data.message);
-        }
+            if(data.functions.payload.data.cardId) {
+                const newCardIdSet = new Set();  // Create a new Set
+                newCardIdSet.add(data.functions.payload.data.cardId);  // Add the cardId to the Set
+                handleGetDatasetQueryWithCards(Array.from(newCardIdSet)); 
+            }
         setIsLoading(false);
         removeLoadingMessage();
     };
@@ -929,7 +953,7 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
                                             />
                                             <Button
                                                 variant="filled"
-                                                disabled={!isConnected || selectedThreadId}
+                                                disabled={!isConnected || schema.length < 1 || selectedThreadId}
                                                 onClick={chatLoading ? stopMessage : sendMessage}
                                                 style={{
                                                     position: "absolute",
@@ -940,10 +964,10 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
                                                     height: "30px",
                                                     padding: "0",
                                                     minWidth: "0",
-                                                    backgroundColor: isConnected ? "#8A64DF" : "#F1EBFF",
+                                                    backgroundColor: isConnected && schema.length > 0 ? "#8A64DF" : "#F1EBFF",
                                                     color: "#FFF",
                                                     border: "none",
-                                                    cursor: isConnected ? "pointer" : "not-allowed",
+                                                    cursor: isConnected && schema.length > 0 ? "pointer" : "not-allowed",
                                                     display: "flex",
                                                     justifyContent: "center",
                                                     alignItems: "center",
