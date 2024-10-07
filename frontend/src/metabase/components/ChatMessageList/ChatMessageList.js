@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 import CS from "metabase/css/core/index.css";
 import cx from "classnames";
@@ -7,12 +7,13 @@ import VisualizationResult from "metabase/query_builder/components/Visualization
 import { MonospaceErrorDisplay } from "../ErrorDetails/ErrorDetails.styled";
 import { Skeleton } from "metabase/ui";
 import { PlanDisplay } from "metabase/components/Insight/InsightPlan";
-import { InsightText } from "metabase/components/Insight/InsightText";
 import { InsightImg } from "metabase/components/Insight/InsightImg";
 import { InsightCode } from "metabase/components/Insight/InsightCode";
 import { TableDisplay } from "../Insight/InsightTable";
 import { InsightReport } from "../Insight/InsightReport";
+import { highlightCode, styles } from "../Insight/utils";
 import JSZip from 'jszip';
+import ReactMarkdown from 'react-markdown';
 
 const ChatMessageList = ({
   messages,
@@ -42,14 +43,24 @@ const ChatMessageList = ({
   insightTitle,
   insightSummary,
   insightSections,
-  insightRecommendations
+  insightRecommendations,
+  planResponse,
+  progressShow
 }) => {
   const messageEndRef = useRef(null);
+  const [showCode, setShowCode] = useState(false);
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  const handleShowCode = () => {
+    setShowCode(!showCode);
+  }
+
+const formattedInsightText = insightsText.join('\n\n'); 
+const formattedInsightsCode = insightsCode.join('\n\n'); 
 
   function updateInsightsCode(insightsCsv, insightsCode) {
     // Extract all file IDs from the insightsCode
@@ -235,48 +246,114 @@ const ChatMessageList = ({
           )}
 
           {/* Loop over insightsPlan and display matching items */}
-          {insightsPlan.map((planItem, index) => (
+          {!progressShow && insightsPlan.map((planItem, index) => (
             message.showType == "planReview" && (
-              <div key={`plan-${index}`} style={{ padding: '10px' }}>
-                <PlanDisplay plan={planItem} />
-              </div>
-            )
-          ))}
-
-          {/* Loop over insightsText and display matching items */}
-          {insightsText.map((insightText, index) => (
-            message.showType == "insightText" && message.visualizationIdx === index && (
-              <div key={`insightText-${index}`} style={{ padding: '10px' }}>
-                <InsightText index={index} insightText={insightText} />
-                {insightsCode[index] && message.text.includes("Current Step:") && (
-                  <div style={{ marginTop: '10px' }}>
-                    <InsightCode index={index} insightCode={insightsCode[index]} />
-                  </div>
-                )}
-                {message.text.includes("Here is your final result:") && (
-                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+              <div key={`plan-${index}`}>
+                <PlanDisplay plan={planItem} index={index} />
+                {index === insightsPlan.length - 1 && (
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginBottom: '20px', marginTop: '20px' }}>
                     <button style={{ padding: '10px 20px',
                       fontSize: '16px',
-                      backgroundColor: '#8A64DF',
+                      backgroundColor: 'white',
+                      color: '#587330',
+                      border: '1px solid #587330',
+                      borderRadius: '5px',
+                      cursor: 'pointer'}} >Edit</button>
+                    <button onClick={planResponse} style={{ padding: '10px 20px',
+                      fontSize: '16px',
+                      backgroundColor: '#587330',
                       color: 'white',
                       border: 'none',
                       borderRadius: '5px',
-                      cursor: 'pointer'}} 
-                      onClick={downloadInsightsCode}>Download Code</button>
+                      cursor: 'pointer'}} >Continue</button>
                   </div>
                 )}
               </div>
             )
           ))}
 
-          {/* Loop over insightsImg and display matching items */}
-          {insightsImg.map((insightImg, index) => (
-            message.showType == "insightImg" && message.visualizationIdx === index && (
-              <div key={`insightImg-${index}`} style={{ padding: '10px' }}>
-                <InsightImg index={index} insightImg={insightImg} />
+          {progressShow && 
+          <div 
+            key={`insightWrapper-${index}`} 
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',  // Create space between the left and right sides
+              alignItems: 'flex-start', 
+              gap: '20px',
+              padding: '10px' 
+            }}
+          >
+            {/* Left side: Placeholder or empty space */}
+            <div style={{ flex: '1' }}>
+            {insightsPlan.map((planItem, index) => (
+            message.showType == "insightProgress" && (
+              <div key={`plan-${index}`}>
+                <PlanDisplay plan={planItem} index={index} />
               </div>
             )
           ))}
+            </div>
+              {message.showType === "insightProgress" && (
+                <div style={{ 
+                    flex: '1'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                    { insightsText.length > 0 && (
+                    <div style={{
+                      textAlign: 'right', 
+                      height: '400px', 
+                      overflowY: 'auto', 
+                      overflowX: 'hidden',
+                      border: '1px solid #ccc',
+                      borderRadius: '5px', 
+                      position: 'relative', 
+                      padding: '10px', 
+                    }}>
+                      {/* Show Code Button */}
+                      <button style={{ padding: '5px 10px',
+                          fontSize: '14px',
+                          backgroundColor: 'white',
+                          color: '#587330',
+                          borderRadius: '5px',
+                          cursor: 'pointer'}} onClick={handleShowCode} >{showCode ? 'Show Text' : 'Show Code'} &nbsp;&nbsp;<Icon name="chevronright" size={14} /></button>
+
+                      {!showCode ? (
+                          <div style={styles.insightTextWrapper}>
+                          <ReactMarkdown>{formattedInsightText}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div style={styles.stepContainer}>
+                          <pre style={styles.codeBlock}>
+                            {highlightCode(formattedInsightsCode)}
+                          </pre>
+                        </div>
+                      )} 
+                    </div>
+                      )}
+                      {insightsImg.length > 0 && (
+                        <div style={{
+                          textAlign: 'right', 
+                          height: '400px', 
+                          overflowY: 'auto', 
+                          overflowX: 'hidden',
+                          border: '1px solid #ccc',
+                          borderRadius: '5px', 
+                          position: 'relative', 
+                          padding: '10px',
+                          marginTop: '10px',
+                        }}>
+                          {insightsImg.map((insightImg, index) => (
+                              <div key={`insightImg-${index}`} style={{ padding: '10px' }}>
+                                <InsightImg index={index} insightImg={insightImg} />
+                              </div>
+                          ))}
+                        </div>
+                        )}
+                  </div>
+                </div>
+              )}
+          </div>
+          }
 
           {/* Conditionally render visualization under the specific message */}
           {message.showVisualization && (
