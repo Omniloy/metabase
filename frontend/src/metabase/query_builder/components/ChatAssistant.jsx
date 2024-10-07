@@ -69,6 +69,7 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
     const [insightSummary, setInsightSummary] = useState([]);
     const [insightSections, setInsightSections] = useState([]);
     const [insightRecommendations, setInsightRecommendations] = useState([]);
+    const [progressShow, setProgressShow] = useState(false);
     const [codeIndex, setCodeIndex] = useState(-1);
     const [insightTextIndex, setInsightTextIndex] = useState(-1);
     const [runId, setRunId] = useState('');
@@ -567,10 +568,6 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
         setInisghtPlan(prevPlan => [...prevPlan, ...plan]);
         removeLoadingMessage();
         clearInfoMessage();
-        addServerMessage(
-            "Here is your plan please provide an answer to continue the task",
-            "text",
-        )
     };
 
     const handleGetImage = async func => {
@@ -586,16 +583,6 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
             } else {
                 throw new Error('Invalid image buffer format');
             }
-            setVisualizationIndex(prevIndex => {
-                const currentIndex = prevIndex + 1;
-                addServerMessageWithType(
-                    `Here is your visualization`,
-                    "text",
-                    "insightImg",
-                    currentIndex
-                );
-                return currentIndex;
-            });
             setRunId(runId)
             setCodeInterpreterThreadId(codeInterpreterThreadId)
             if (status === "completed") {
@@ -610,16 +597,6 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
     const handleGetText = async func => {
         const { generatedTexts, status, runId } = func.arguments;
         try {
-            setInsightTextIndex(prevIndex => {
-                const currentIndex = prevIndex + 1;
-                addServerMessageWithType(
-                    status === "completed" ? "Here is your final result:" : "Current Step:",
-                    "text",
-                    "insightText",
-                    currentIndex
-                );
-                return currentIndex;
-            });
             setInsightsText(prevInsightsText => [...prevInsightsText, generatedTexts.value]);
             setIsLoading(false);
             removeLoadingMessage();
@@ -1262,6 +1239,35 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
         }
     }
 
+    const planResponse = () => {
+        if(toolWaitingResponse === "planReview") {
+            ws.send(
+                JSON.stringify({
+                    type: "toolResponse",
+                    response: {
+                        function_name: toolWaitingResponse,
+                        response: JSON.stringify("ok"),
+                    },
+                })
+            );
+            setToolWaitingResponse(null);
+            removeExistingMessage("Here is a plan how we want to get insights for your task. Have a look at it. We will keep you updated on each step of the plan. Please review it and let us know if you have any questions or suggestions.")
+            setMessages(prevMessages => [
+                ...prevMessages,
+                {
+                    id: Date.now() + Math.random(),
+                    text: "Please find below the plan I will perform to calculate it.",
+                    typeMessage: "data",
+                    sender: "server",
+                    type: "text",
+                    showType: "insightProgress",
+                }
+            ]);
+            setIsLoading(true)
+            setProgressShow(true)
+        }
+    }
+
     useEffect(() => {
         if (initial_message.message) {
             setInputValue(initial_message.message);
@@ -1342,6 +1348,7 @@ const ChatAssistant = ({ selectedMessages, selectedThreadId, setSelectedThreadId
                                 insightsText={insightsText} insightsImg={insightsImg} insightsCode={insightsCode} showCubeEditButton={showCubeEditButton} sendAdminRequest={handleCubeRequestDialogOpen} onSuggestion={handleSuggestion}
                                 insightsCsv={insightsCsv} insightFile={insightFile} insightTables={insightTables} insightReasoning={insightReasoning} insightCellCode={insightCellCode}
                                 insightTitle={insightTitle} insightSummary={insightSummary} insightSections={insightSections} insightRecommendations={insightRecommendations}
+                                planResponse={planResponse} progressShow={progressShow}
                             />
                             <div
                                 style={{
