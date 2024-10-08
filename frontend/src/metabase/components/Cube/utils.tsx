@@ -18,7 +18,16 @@ export interface CubeFlowProps {
 }
 
 interface CubeInfo {
-  fields: { [fieldName: string]: string };
+  fields: {
+    name: string;
+    title: string;
+    description: string;
+    type: string;
+    isVisible: boolean;
+    public: boolean;
+    aggType?: string; // Campo opcional para medidas
+    primaryKey?: boolean; // Campo opcional para dimensiones
+  }[];
 }
 
 interface Field {

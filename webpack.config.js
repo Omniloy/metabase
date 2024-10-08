@@ -311,8 +311,7 @@ const config = {
       MB_LOG_ANALYTICS: "false",
       REACT_APP_WEBSOCKET_SERVER:
         process.env.REACT_APP_WEBSOCKET_SERVER || "wss://dev.chat.omniloy.com",
-      REACT_APP_SEMANTIC:
-        process.env.REACT_APP_SEMANTIC || "https://dev.semantic.omniloy.com",
+      REACT_APP_SEMANTIC: process.env.REACT_APP_WEBSOCKET_SERVER || "http://omniloydev-cube-server-9a4a38:3001"
     }),
     // https://github.com/remarkjs/remark/discussions/903
     new webpack.ProvidePlugin({ process: "process/browser.js" }),

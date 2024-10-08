@@ -51,7 +51,7 @@ export const CubePreviewTable = ({
   const databases = data?.data;
   const dispatch = useDispatch();
 
-const cubeTable = extractCubeName(cubeData.content)
+const cubeTable =cubeData.name
 
 const [question, setQuestion] = useState<StructuredDatasetQuery | typeof skipToken>(skipToken);
 

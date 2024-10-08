@@ -1,19 +1,40 @@
 export interface CubeDataItem {
-    fileName: string;
-    content: string;
-}
-
-export type CubeDataResponse = CubeDataItem[];
-
-export type GetCubeDataRequest = {
-    companyName: string;
-}
-
-export type UpdateCubeDataRequest = {
+    name: string; 
+    title: string;
+    description: string;
+    measures: {
+        name: string;
+        title: string;
+        description: string;
+        type: string;
+        aggType: string;
+        isVisible: boolean;
+        public: boolean;
+    }[];
+    dimensions: {
+        name: string;
+        title: string;
+        type: string;
+        description: string;
+        isVisible: boolean;
+        public: boolean;
+        primaryKey?: boolean;
+    }[];
+  }
+  
+  export interface CubeDataResponse {
+    cubes: CubeDataItem[];
+  }
+  
+  export type GetCubeDataRequest = {
+    projectName: string;
+  };
+  
+  export type UpdateCubeDataRequest = {
     payload: {
         cubeFiles: {
             model: {
-                cubes: Record<string, string>;
+                cubes: CubeDataItem[];
             };
         };
     };
@@ -37,3 +58,4 @@ export type RegisterCubeRequest = {
 export type DeployCubeRequest = {
     companyName: string;
 }
+  

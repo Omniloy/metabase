@@ -1,52 +1,17 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import ReactFlow, {
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Background,
-  Controls,
-  MarkerType,
-  Edge,
-  ReactFlowInstance,
-} from "reactflow";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactFlow, { useNodesState, useEdgesState, addEdge, Background, Controls, MarkerType, Edge, ReactFlowInstance } from "reactflow";
 import "reactflow/dist/style.css";
 import { Flex, Group, Title } from "metabase/ui";
 import { t } from "ttag";
 import NoResults from "assets/img/no_results.svg";
-import {
-  createGraphData,
-  createNewGraphData,
-  CubeData,
-  CubeFlowProps,
-  extractCubeName,
-  extractSQLInfo,
-  extractTableName,
-  FieldData,
-  MapData,
-  newExtractAllJoins,
-} from "./utils";
+import { createGraphData, createNewGraphData, CubeData, FieldData, MapData, newExtractAllJoins } from "./utils";
 import CustomNode from "./CubeNode";
 import { getLayoutedElements } from "./LayoutedElements";
-import {
-  skipToken,
-  useGetCubeDataQuery,
-  useListDatabasesQuery,
-} from "metabase/api";
+import { skipToken, useGetCubeDataQuery, useListDatabasesQuery } from "metabase/api";
 import LoadingAndErrorWrapper from "../LoadingAndErrorWrapper";
-import {
-  BrowseContainer,
-  BrowseHeader,
-  BrowseSection,
-  CenteredEmptyState,
-} from "metabase/browse/components/BrowseContainer.styled";
+import { BrowseContainer, BrowseHeader, BrowseSection, CenteredEmptyState } from "metabase/browse/components/BrowseContainer.styled";
 import { Box } from "@mantine/core";
-import { GetCubeDataRequest } from "metabase-types/api";
+import { CubeDataItem } from "metabase-types/api"; // Importamos los tipos correctos
 
 const nodeTypes = {
   custom: CustomNode,
@@ -69,46 +34,47 @@ const CubeFlow = () => {
     return "";
   }, [databases]);
 
-  const { data, isLoading, error } = useGetCubeDataQuery(
-    companyName ? { companyName } : skipToken,
+  // Utilizamos la consulta para obtener los datos de los cubos
+  const { data: cubeDataResponse, isLoading, error } = useGetCubeDataQuery(
+    companyName ? { projectName: companyName } : skipToken,
   );
+
   const [showDefinition, setShowDefinition] = useState<boolean>(false);
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
-  const cubes = data as { content: string }[];
+  // Accedemos a la propiedad 'cubes' dentro de la respuesta
+  const cubes: CubeDataItem[] = cubeDataResponse?.cubes ?? [];
 
   const tableGroups: { [key: string]: FieldData[] } = {};
+
   if (error) {
     return <LoadingAndErrorWrapper error />;
   }
 
-  if (!cubes && isLoading) {
+  if (!cubes.length && isLoading) {
     return <LoadingAndErrorWrapper loading />;
   }
 
-  if (!cubes?.length) {
+  if (!cubes.length) {
     return (
       <CenteredEmptyState
         title={<Box mb=".5rem">{t`No databases here yet`}</Box>}
-        illustrationElement={
-          <Box mb=".5rem">
-            <img src={NoResults} />
-          </Box>
-        }
+        illustrationElement={<Box mb=".5rem"><img src={NoResults} /></Box>}
       />
     );
   }
 
-  const cubesArr: any = cubes.map(cube => cube.content);
+  // Ahora trabajamos con 'measures' y 'dimensions' de cada cubo
+  const cubesArr = cubes.map(cube => cube.name); // Usamos 'name' directamente
   let tableNameArr: string[] = [];
   let cubeNameArr: string[] = [];
   cubes.forEach(cube => {
-    const cubeName = extractCubeName(cube.content);
-    const tableName = extractCubeName(cube.content);
+    const cubeName = cube.name; // Usamos 'name'
+    const tableName = cube.name; // Ajustado para usar 'name'
     tableNameArr.push(tableName);
     cubeNameArr.push(cubeName);
-    const cubeInfo = extractSQLInfo(cube.content);
   });
+
   const newJoinFromArr = newExtractAllJoins(cubesArr);
 
   const extractedKeys = Object.keys(newJoinFromArr);
@@ -120,7 +86,6 @@ const CubeFlow = () => {
         return item.replace("${CUBE}", `\${${cubeName}}`);
       });
     });
-
     return result;
   };
   const modifiedValues = modifiedExtractedVal();
@@ -228,20 +193,34 @@ const CubeFlow = () => {
   const cubeData: CubeData = {};
 
   cubes.forEach(cube => {
-    const cubeName = extractCubeName(cube.content);
-    const cubeInfo = extractSQLInfo(cube.content);
-
-    cubeData[cubeName] = {
-      fields: cubeInfo.fields,
+    const cubeName = cube.name;
+    const cubeInfo = {
+      fields: [
+        ...cube.dimensions.map(dimension => ({
+          name: dimension.name,
+          title: dimension.title,
+          description: dimension.description,
+          type: dimension.type,
+          isVisible: dimension.isVisible,
+          public: dimension.public,
+          primaryKey: dimension.primaryKey, // Para dimensiones
+        })),
+        ...cube.measures.map(measure => ({
+          name: measure.name,
+          title: measure.title,
+          description: measure.description,
+          type: measure.type,
+          isVisible: measure.isVisible,
+          public: measure.public,
+          aggType: measure.aggType, // Para medidas
+        }))
+      ],
     };
+  
+    cubeData[cubeName] = cubeInfo; // Ahora esto debería funcionar
   });
+  
 
-  const oldGraphData = createGraphData(
-    tableGroups,
-    cubeData,
-    tableNameArr,
-    cubeNameArr,
-  );
   const graphData = createNewGraphData(
     tableGroups,
     cubeData,
@@ -345,7 +324,7 @@ const CubeFlow = () => {
             stroke: isHighlighted ? highlightColor : defaultColor,
           },
           markerEnd: {
-            type: MarkerType.ArrowClosed, // Or whichever marker type you're using
+            type: MarkerType.ArrowClosed,
             color: isHighlighted ? highlightColor : defaultColor,
           },
         } as Edge;
