@@ -48,8 +48,9 @@ export const HomeLayout = () => {
   const [showButton, setShowButton] = useState(false);
   const [insightDB, setInsightDB] = useState<number | null>(null);
   const [insightSchema, setInsightSchema] = useState<any[]>([]);
-  const langchain_url = useSetting("langchain-url");
-  const langchain_key = useSetting("langchain-key");
+  const langchain_url =
+  "https://assistants-dev-7ca2258c0a7e5ea393441b5aca30fb7c.default.us.langgraph.app";
+const langchain_key = "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";
   const [client, setClient] = useState<any>(null);
   const [clientSmith, setSmithClient] = useState<any>(null);
   const [shouldRefetchHistory, setShouldRefetchHistory] = useState(false); // State to trigger chat history refresh
