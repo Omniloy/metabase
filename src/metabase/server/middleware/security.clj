@@ -92,6 +92,7 @@
                                   "*"
                                   "https://*.app.omniloy.com"
                                   "https://assistants-dev-*"
+                                  "https://assistants-prod-*"
                                  ;; See [[generate-nonce]]
                                  (when nonce
                                    (format "'nonce-%s'" nonce))
@@ -118,6 +119,7 @@
                                  "https://accounts.google.com"
                                  "http://newomniloydev-cube-server-f5e531:3001"
                                  "https://assistants-dev-*"
+                                 "https://assistants-prod-*"
                                  ;; MailChimp. So people can sign up for the Metabase mailing list in the sign up process
                                  "metabase.us10.list-manage.com"
                                  ;; Semantic Layer

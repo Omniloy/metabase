@@ -93,6 +93,7 @@ import {
   PLUGIN_ADMIN_PERMISSIONS_DATABASE_ROUTES,
   PLUGIN_ADMIN_PERMISSIONS_DATABASE_GROUP_ROUTES,
 } from "metabase/plugins";
+import { OpenCanvas } from "./home/components/HomeLayout/OpenCanvas";
 
 
 export const getRoutes = store => {
@@ -301,6 +302,7 @@ export const getRoutes = store => {
             <Route path="chat" component={HomeLayout} />
             <Route path="insights" component={HomeLayout} />
             <Route path="databases/:slug" component={BrowseSchemas} />
+            <Route path="open-canvas" component={OpenCanvas} />
             <Route
               path="databases/:dbId/schema/:schemaName"
               component={BrowseTables}

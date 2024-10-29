@@ -1,0 +1,51 @@
+import * as React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../ui/tooltip";
+import { Button, ButtonProps } from "../../ui/button";
+import { cn } from "../../lib/utils";
+
+export type TooltipIconButtonProps = ButtonProps & {
+  tooltip: string | React.ReactNode;
+  side?: "top" | "bottom" | "left" | "right";
+  /**
+   * @default 700
+   */
+  delayDuration?: number;
+};
+
+export const TooltipIconButton = React.forwardRef<
+  HTMLButtonElement,
+  TooltipIconButtonProps
+>(
+  (
+    { children, tooltip, side = "bottom", className, delayDuration, ...rest },
+    ref
+  ) => {
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={delayDuration ?? 700}>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              {...rest}
+              className={cn("size-6 p-1", className)}
+              ref={ref}
+            >
+              {children}
+              <span className="sr-only">{tooltip}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side={side}>{tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+) as React.ForwardRefExoticComponent<
+TooltipIconButtonProps & React.RefAttributes<HTMLButtonElement>>;
+
+TooltipIconButton.displayName = "TooltipIconButton";

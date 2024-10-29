@@ -40,5 +40,7 @@ const Popover: typeof MantinePopover & {
   Dropdown: typeof PopoverDropdown;
 } = MantinePopover;
 
+console.log("Popover Component:", Popover); 
+
 export { Popover };
 export { DEFAULT_POPOVER_Z_INDEX } from "./Popover.styled";

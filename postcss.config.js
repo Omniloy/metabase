@@ -10,6 +10,7 @@ module.exports = {
   plugins: {
     "postcss-import": {},
     "postcss-url": {},
+    tailwindcss: {},
     "postcss-preset-env": {
       stage: 2,
       importFrom: CSS_SRC,

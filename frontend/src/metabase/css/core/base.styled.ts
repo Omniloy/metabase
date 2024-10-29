@@ -76,8 +76,4 @@ export const baseStyle = css`
     font-family: var(--mb-default-font-family), "Helvetica Neue", Helvetica,
       sans-serif;
   }
-
-  textarea {
-    min-height: 110px;
-  }
 `;

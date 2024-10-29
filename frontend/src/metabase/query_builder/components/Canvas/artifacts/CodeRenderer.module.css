@@ -1,0 +1,37 @@
+.codeMirrorCustom {
+  height: 100vh !important;
+  overflow: hidden;
+}
+
+.codeMirrorCustom :global(.cm-editor) {
+  height: 100% !important;
+  border: none !important;
+}
+
+.codeMirrorCustom :global(.cm-scroller) {
+  overflow: auto;
+}
+
+.codeMirrorCustom :global(.cm-gutters) {
+  height: 100% !important;
+  border-right: none !important;
+}
+
+.codeMirrorCustom :global(.cm-focused) {
+  outline: none !important;
+}
+
+
+/* styles.module.css */
+.pulseCode .cmContent {
+  animation: codePulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes codePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

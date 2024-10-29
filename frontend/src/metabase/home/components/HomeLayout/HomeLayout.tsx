@@ -26,6 +26,8 @@ import { Client as ClientSmith } from "langsmith/client";
 import { useSetting } from "metabase/common/hooks";
 import { t } from "ttag";
 import { CardApi } from "metabase/services";
+import { AnimatedStack } from "metabase/query_builder/components/ChatBox";
+import { Canvas, User } from "metabase/query_builder/components/Canvas/Canvas";
 
 export const HomeLayout = () => {
   const initialMessage = useSelector(getInitialMessage);
@@ -49,6 +51,8 @@ export const HomeLayout = () => {
   const [showButton, setShowButton] = useState(false);
   const [insightDB, setInsightDB] = useState<number | null>(null);
   const [insightSchema, setInsightSchema] = useState<any[]>([]);
+  const [isStackVisible, setIsStackVisible] = useState(false);
+  const [user, setUser] = useState<User>({id: '1'});
   const langchain_url =
     "https://assistants-prod-9c6885f051b75a548b0496804051487b.default.us.langgraph.app";
   const langchain_key = "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";
@@ -58,12 +62,12 @@ export const HomeLayout = () => {
   const [shouldRefetchHistory, setShouldRefetchHistory] = useState(false); // State to trigger chat history refresh
   const siteName = useSetting("site-name");
   const formattedSiteName = siteName
-    ? siteName.replace(/\s+/g, "_").toLowerCase()
-    : "";
-
+  ? siteName.replace(/\s+/g, "_").toLowerCase()
+  : "";
+  
   useEffect(() => {
     const initializeClient = async () => {
-      const clientInstance = new Client({ apiUrl: langchain_url, apiKey: langchain_key });
+      const clientInstance = new Client();
       const clientSmithInstance = new ClientSmith({ apiKey: langchain_key })
       setSmithClient(clientSmithInstance)
       setClient(clientInstance);
@@ -216,9 +220,8 @@ export const HomeLayout = () => {
 
   const handleStartNewChat = async () => {
     try {
-      if (!client) return;
+      if (!client) return; 
       const createdThread = await client.threads.create();
-
       setSelectedThreadId(null);
       setThreadId(createdThread);
 
@@ -226,6 +229,7 @@ export const HomeLayout = () => {
       setInputValue("");
 
       setOldCardId(null);
+      setIsStackVisible(!isStackVisible);
     } catch (error) {
       console.error("Error creating new chat thread:", error);
     }
@@ -237,7 +241,7 @@ export const HomeLayout = () => {
 
   return (
     <>
-      {!showChatAssistant ? (
+      {showChatAssistant ? (
         <>
           {!hasDatabases ? (
             <NoDatabaseError />
@@ -301,27 +305,6 @@ export const HomeLayout = () => {
                         </ChatSection>
                       )}
                     </div>
-                    {client && (
-                      <Stack
-                        mb="lg"
-                        spacing="xs"
-                        style={{ minWidth: "300px", width: "300px" }}
-                      >
-                        <ChatHistory
-                          client={client}
-                          setSelectedChatHistory={setSelectedChatHistory}
-                          setThreadId={setSelectedThreadId}
-                          type={selectedChatHistoryType}
-                          setOldCardId={setOldCardId}
-                          setInsights={setInsights}
-                          showChatAssistant={showChatAssistant}
-                          setShowChatAssistant={setShowChatAssistant}
-                          shouldRefetchHistory={shouldRefetchHistory}
-                          setShouldRefetchHistory={setShouldRefetchHistory}
-                        />
-                      </Stack>
-                    )}
-
                   </LayoutRoot>
                 ))
 
@@ -331,92 +314,20 @@ export const HomeLayout = () => {
           )}
         </>
       ) : (
-        <BrowseContainer>
-          {showButton && (
-            <Flex
-              style={{
-                justifyContent: "flex-end",
-                alignItems: "center",
-                marginRight: "3rem",
-                gap: "1rem",
-              }}
-            >
-              <button
-                style={{ color: isChatHistoryOpen ? "#8A64DF" : "#76797D", cursor: "pointer", marginTop: ".2rem" }}
-                onClick={toggleChatHistory}
-              >
-                <Icon
-                  name="chatHistory"
-                  size={18}
-                  style={{ fill: isChatHistoryOpen ? "#8A64DF" : "#76797D", paddingTop: "2px", paddingLeft: "2px" }}
-                />
-              </button>
-
-              <button
-                style={{ color: "#8A64DF", cursor: "pointer" }}
-                onClick={handleStartNewChat}
-              >
-                <p style={{ fontSize: "14px", color: "#8A64DF", fontWeight: "500" }}>
-                  {t`New Thread`}
-                </p>
-              </button>
-            </Flex>
-          )}
-          <BrowseMain>
-            <Flex style={{ height: "85vh", width: "100%" }}>
+  
+            <Flex style={{ height: "100%", width: "100%" }}>
               <Stack
                 mb="lg"
                 spacing="xs"
                 style={{
                   flexGrow: 1,
-                  // borderRight: isChatHistoryOpen ? "1px solid #e3e3e3" : "none",
                 }}
               >
-                <ChatAssistant
-                  metabase_id_back={metabase_id_back}
-                  client={client}
-                  clientSmith={clientSmith}
-                  selectedMessages={selectedChatHistory}
-                  selectedThreadId={selectedThreadId}
-                  chatType={selectedChatType}
-                  setSelectedThreadId={setSelectedThreadId}
-                  initial_message={initialMessage}
-                  setInitialMessage={setInitialMessage}
-                  setMessages={setMessages}
-                  setInputValue={setInputValue}
-                  setThreadId={setThreadId}
-                  threadId={threadId}
-                  inputValue={inputValue}
-                  messages={messages}
-                  isChatHistoryOpen={isChatHistoryOpen}
-                  setShowButton={setShowButton}
-                  setShouldRefetchHistory={setShouldRefetchHistory}
-                  modelSchema={modelSchema}
-              />
+                <Canvas user={{id: '1'}} />
               </Stack>
-              {isChatHistoryOpen && selectedChatType !== "insights" && (
-                <Stack
-                  mb="lg"
-                  spacing="xs"
-                  style={{ minWidth: "300px", width: "300px", marginTop: "1rem" }}
-                >
-                  <ChatHistory
-                    client={client}
-                    setSelectedChatHistory={setSelectedChatHistory}
-                    setThreadId={setSelectedThreadId}
-                    type={selectedChatHistoryType}
-                    setOldCardId={setOldCardId}
-                    setInsights={setInsights}
-                    showChatAssistant={showChatAssistant}
-                    setShowChatAssistant={setShowChatAssistant}
-                    shouldRefetchHistory={shouldRefetchHistory}
-                    setShouldRefetchHistory={setShouldRefetchHistory}
-                  />
-                </Stack>
-              )}
+              
             </Flex>
-          </BrowseMain>
-        </BrowseContainer>
+       
       )}
     </>
   );

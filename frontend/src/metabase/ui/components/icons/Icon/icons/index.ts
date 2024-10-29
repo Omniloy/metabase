@@ -95,6 +95,8 @@ import cloud_component from "./cloud.svg?component";
 import cloud_source from "./cloud.svg?source";
 import cloud_filled_component from "./cloud_filled.svg?component";
 import cloud_filled_source from "./cloud_filled.svg?source";
+import command_line_component from "./command_line.svg?component";
+import command_line_source from "./command_line.svg?source";
 import combine_component from "./combine.svg?component";
 import combine_source from "./combine.svg?source";
 import compare_component from "./compare.svg?component";
@@ -601,6 +603,12 @@ export const Icons = {
     component: cloud_filled_component,
     source: cloud_filled_source,
   },
+
+  commandLine: {
+    component: command_line_component,
+    source: command_line_source
+  },
+
   compare: {
     component: compare_component,
     source: compare_source,

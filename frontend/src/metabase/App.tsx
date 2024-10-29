@@ -3,7 +3,7 @@ import { KBarProvider } from "kbar";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { connect } from "react-redux";
-
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 import { AppBanner } from "metabase/components/AppBanner";
 import {
   Archived,
@@ -98,8 +98,12 @@ function App({
     initializeIframeResizer();
   }, []);
 
+  const theme = createTheme({})
+
   return (
     <ErrorBoundary onError={onError}>
+      <ThemeProvider theme={theme}>
+       <CssBaseline />
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -127,6 +131,7 @@ function App({
           <Palette />
         </KBarProvider>
       </ScrollToTop>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
