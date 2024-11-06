@@ -59,7 +59,6 @@ export function ContentComposerChatInterface(
   // const { toast } = useToast();
   const { messages, setMessages, streamMessage } = props;
   const [isRunning, setIsRunning] = useState(false);
-  console.log('QUERY: ', props.sqlQuery)
   async function onNew(message: AppendMessage): Promise<void> {
     if (message.content?.[0]?.type !== "text") {
       // toast({
@@ -207,6 +206,7 @@ const handleGetDatasetQuery = async (cardId: number) => {
           display: fetchedCard.display,
           visualization_settings: {},
           dataset_query: getDatasetQuery,
+          isExample: false
       });
 
       // Generate a unique hash for this question

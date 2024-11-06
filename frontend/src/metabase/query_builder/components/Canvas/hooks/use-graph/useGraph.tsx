@@ -15,7 +15,8 @@ import {
   TextHighlight,
   CodeHighlight,
 } from "../../types"
-
+import { ChatCardApi } from "metabase/services";
+import { getDBInputValue, getInsightDBInputValue } from "metabase/redux/initialDb";
 import { parsePartialJson } from "@langchain/core/output_parsers";
 import { useRuns } from "../useRuns";
 import { reverseCleanContent } from "../../lib/normalize_string";
@@ -43,6 +44,7 @@ import { question } from "metabase/lib/urls";
 import { useSelector } from "metabase/lib/redux";
 import { getInitialSchema } from "metabase/redux/initialSchema";
 // import { DEFAULT_ARTIFACTS, DEFAULT_MESSAGES } from "@/lib/dummy";
+import { useSetting } from "metabase/common/hooks";
 
 export interface GraphInput {
   messages?: Record<string, any>[];
@@ -100,12 +102,19 @@ export interface UseGraphInput {
 
 export function useGraph(useGraphInput: UseGraphInput) {
   // const { toast } = useToast();
+  const siteName = useSetting("site-name");
   const initialSchema = useSelector(getInitialSchema);
   // const [card, setCard] = useState<any>([]);
   // const [cardHash, setCardHash] = useState<any>([]);
   // const [result, setResult] = useState<any>([]);
   // const [defaultQuestion, setDefaultQuestion] = useState<any>([]);
+  const formattedSiteName = siteName
+    ? siteName.replace(/\s+/g, "_").toLowerCase()
+    : "";
+  const initialDbName = useSelector(getDBInputValue);
+  const initialCompanyName = formattedSiteName;
   const { shareRun } = useRuns();
+  const [modelSchema, setModelSchema] = useState([])
   const [messages, setMessages] = useState<BaseMessage[]>([]);
   const [artifact, setArtifact] = useState<ArtifactV3>();
   const [selectedBlocks, setSelectedBlocks] = useState<TextHighlight>();
@@ -179,6 +188,33 @@ export function useGraph(useGraphInput: UseGraphInput) {
     return btoa(decodeURIComponent(encodeURIComponent(JSON.stringify(question))));
   }
 
+  useEffect(() => {
+    const getCards = async () => {
+      try {
+        const cardsList = await CardApi.list();
+        const modelCards = cardsList
+          .filter((card: any) => card.type === "model")
+          .map((card: any) => ({
+            id: `card__${card.id}`,
+            model_schema: (card.result_metadata || []).map((metadata: any) => {
+              const { field_ref, ...rest } = metadata;
+              return rest;
+            }),
+            name: card.name,
+            description: card.description
+          }));
+
+        setModelSchema(modelCards);
+      } catch (error) {
+        console.error("Error fetching cards:", error);
+      }
+    };
+
+    getCards();
+  }, []);
+
+
+
   const updateArtifact = async (
     artifactToUpdate: ArtifactV3,
     threadId: string
@@ -207,23 +243,23 @@ export function useGraph(useGraphInput: UseGraphInput) {
 
   const streamMessageV2 = async (params: GraphInput) => {
     setFirstTokenReceived(false);
-  
+
     if (!useGraphInput.threadId || !useGraphInput.assistantId) {
       toast.error("Thread ID or Assistant ID not found");
       return;
     }
-  
+
     const client = createClient();
-  
+
     const input = {
       ...DEFAULT_INPUTS,
       artifact,
       ...params,
       ...(selectedBlocks && { highlightedText: selectedBlocks }),
     };
-  
+
     const inputMessageContent = input.messages?.[0]?.content || "";
-  
+
     const fieldsToCheck = [
       input.highlightedCode,
       input.highlightedText,
@@ -237,12 +273,12 @@ export function useGraph(useGraphInput: UseGraphInput) {
       input.portLanguage,
       input.customQuickActionId,
     ];
-  
+
     if (fieldsToCheck.filter((field) => field !== undefined).length >= 2) {
       toast.error("Only one field (highlight, language, etc.) allowed");
       return;
     }
-  
+
     setIsStreaming(true);
     let runId = "";
     let followupMessageId = "";
@@ -258,29 +294,29 @@ export function useGraph(useGraphInput: UseGraphInput) {
     const textSet: any = []
     try {
       const stream = client.runs.stream(useGraphInput.threadId, useGraphInput.assistantId, {
-        input: { ...input, company_name: "demo", database_id: 4 },
+        input: { ...input, company_name: initialCompanyName, database_id: initialDbName, schema: modelSchema },
         streamMode: "events",
       });
-  
+
       for await (const chunk of stream) {
         const eventData = chunk?.data;
-  
+
         if (!runId && eventData?.metadata?.run_id) {
           runId = eventData.metadata.run_id;
         }
-  
+
         if (eventData?.event === "on_chat_model_stream") {
           if (eventData.metadata.langgraph_node === "generateArtifact") {
             const messageChunk = eventData.data.chunk?.[1]?.content || "";
-  
+
             if (!messageChunk.includes(inputMessageContent)) {
               aiMessageContent += messageChunk;
             }
           }
         }
-  
+
         if (eventData?.event === "on_chain_end") {
-        console.log("CHUNK", chunk)
+          console.log("CHUNK", chunk)
           const outputMessages = eventData?.data?.output?.messages;
           const images: string[] = eventData?.data?.output?.image_outputs;
           const textResult: string[] = eventData?.data?.output?.text_outputs;
@@ -290,14 +326,14 @@ export function useGraph(useGraphInput: UseGraphInput) {
               const messageContent = Array.isArray(msg.content)
                 ? msg.content.map((item: any) => item.text).join('')
                 : msg.content || '';
-  
+
               if (messageContent.includes(inputMessageContent)) return;
-  
+
               if (msg.type === "tool" && msg.name === "create_card_tool") {
                 try {
                   const cardData = JSON.parse(msg.content);
                   const cardId = cardData?.card_id;
-  
+
                   if (cardId && !addedCardIds.has(cardId)) {  // Add only if cardId is unique
                     addedCardIds.add(cardId);
                     const cardData = await handleGetDatasetQuery(cardId);
@@ -305,7 +341,7 @@ export function useGraph(useGraphInput: UseGraphInput) {
                       if (prevArtifact?.contents.some((content: any) => content.cardId === cardId)) {
                         return prevArtifact;  // Skip if cardId already exists
                       }
-  
+
                       return {
                         ...prevArtifact,
                         currentIndex: (prevArtifact?.contents.length || 0) + 1,
@@ -325,15 +361,15 @@ export function useGraph(useGraphInput: UseGraphInput) {
                 } catch (e) {
                   console.error("Failed to parse card data:", e);
                 }
-              } 
+              }
               else if (msg.type === "tool" && msg.name === "create_and_run_jupy_cell_code") {
                 try {
                   const codeData = JSON.parse(msg.content);
-                  const newInsights:any = [];
+                  const newInsights: any = [];
                   const explanation = codeData?.explanation
                   const pythonCode = codeData?.python_code
                   const result = codeData?.result
-                  if(useGraphInput.threadId && runId) {
+                  if (useGraphInput.threadId && runId) {
                     const streamStatus = await client.runs.get(useGraphInput.threadId, runId);
                     // console.log("STREAM STATUS", streamStatus)
                     // if(streamStatus && streamStatus.status === 'success') {
@@ -383,7 +419,7 @@ export function useGraph(useGraphInput: UseGraphInput) {
                     //   }
                     // }
                   }
-                  if(result) {
+                  if (result) {
                     textSet.push(result);
                   }
 
@@ -393,20 +429,20 @@ export function useGraph(useGraphInput: UseGraphInput) {
                     newInsights.push(
                       { type: 'explanation', value: explanation },
                       { type: 'code', value: pythonCode }
-                  );
+                    );
                     useGraphInput.setInsightsText((prevText: any) => [...prevText, explanation]);
                     useGraphInput.setInsightsCode((prevCode: any) => [...prevCode, pythonCode]);
                     setArtifact((prevArtifact) => {
                       // const isCodeExists = prevArtifact?.contents.some((content: any) => content.code === pythonCode);
                       // const isExplanationExists = prevArtifact?.contents.some((content: any) => content.explanation === explanation);
-  
+
                       // if (isCodeExists || isExplanationExists) {
                       //   return prevArtifact; // Skip if either exists
                       // }
-                        if (prevArtifact?.contents.some((content: any) => content.type === "insight")) {
+                      if (prevArtifact?.contents.some((content: any) => content.type === "insight")) {
                         return prevArtifact;  // Skip if image type already exists
                       }
-  
+
                       return {
                         ...prevArtifact,
                         currentIndex: (prevArtifact?.contents.length || 0) + 1,
@@ -421,11 +457,11 @@ export function useGraph(useGraphInput: UseGraphInput) {
                         ],
                       };
                     });
-                  }            
+                  }
                 } catch (e) {
                   console.error("Failed to parse card data:", e);
                 }
-              } 
+              }
               else if (messageContent && !processedMessageIds.has(msg.id)) {
                 const aiMessage = new AIMessage({
                   content: messageContent,
@@ -438,32 +474,32 @@ export function useGraph(useGraphInput: UseGraphInput) {
           }
           if (images && images.length > 0) {
             images.forEach((image) => {
-                if (!addedImages.has(image)) {
-                    // Add the image to the addedImages set to prevent duplicates
-                    addedImages.add(image);
-                    const base64Image = `data:image/png;base64,${image}`;
-                    useGraphInput.setInsightsImg((prevImages:any) => [...prevImages, base64Image]);
-                    useGraphInput.setInsightsResult((prevInsightResult:any) => [
-                      ...prevInsightResult,
-                      { type: 'image', value: base64Image }
-                  ]);
-                }
+              if (!addedImages.has(image)) {
+                // Add the image to the addedImages set to prevent duplicates
+                addedImages.add(image);
+                const base64Image = `data:image/png;base64,${image}`;
+                useGraphInput.setInsightsImg((prevImages: any) => [...prevImages, base64Image]);
+                useGraphInput.setInsightsResult((prevInsightResult: any) => [
+                  ...prevInsightResult,
+                  { type: 'image', value: base64Image }
+                ]);
+              }
             });
           }
           if (textResult && textResult.length > 0) {
             textResult.forEach((text) => {
               if (!addedInsightText.has(text) && !text.includes('<Figure size') && !text.includes('Axes>')) {
                 addedInsightText.add(text);
-                useGraphInput.setInsightsResult((prevInsightResult:any) => [
+                useGraphInput.setInsightsResult((prevInsightResult: any) => [
                   ...prevInsightResult,
                   { type: 'text', value: text }
-              ]);
+                ]);
               }
             });
           }
         }
       }
-  
+
       if (aiMessageContent && !aiMessageContent.includes(inputMessageContent)) {
         const finalAiMessage: any = new AIMessage({
           content: aiMessageContent,
@@ -480,14 +516,14 @@ export function useGraph(useGraphInput: UseGraphInput) {
       console.log("TEXT SET", textSet)
       setSelectedBlocks(undefined);
     }
-  
+
     // if (runId) {
     //   shareRun(runId).then(async (sharedRunURL) => {
     //     if (!sharedRunURL) {
     //       console.warn("Shared run URL is undefined.");
     //       return;
     //     }
-  
+
     //     setMessages((prevMessages) =>
     //       prevMessages.map((msg) => {
     //         if (
@@ -503,7 +539,7 @@ export function useGraph(useGraphInput: UseGraphInput) {
     //             },
     //             type: "function",
     //           };
-  
+
     //           return new AIMessage({
     //             ...msg,
     //             content: msg.content,
@@ -520,62 +556,73 @@ export function useGraph(useGraphInput: UseGraphInput) {
     //   }).catch((e) => console.error("Error sharing run:", e));
     // }
   };
-  
+
   const handleGetDatasetQuery = async (cardId: number) => {
-  
+
     try {
-        // Fetch the card details using the provided cardId
-        const fetchedCard = await CardApi.get({ cardId });
-        const queryCard = await CardApi.query({ cardId });
-        const sqlCode = queryCard?.data?.native_form?.query;
-        if (sqlCode) {
-          useGraphInput.setSqlQuery((prevSqlQueries) =>
-            Array.isArray(prevSqlQueries) ? [...prevSqlQueries, sqlCode] : [sqlCode]
-          );
-        }
-        const getDatasetQuery = fetchedCard?.dataset_query;
+      // Fetch the card details using the provided cardId
+      // Fetch the card details using the provided cardId
+      const fetchedCard = await ChatCardApi.get({ cardId });
+      const queryCard = await ChatCardApi.query({ cardId });
+      const getDatasetQuery = fetchedCard?.dataset_query;
 
-        if (!getDatasetQuery) {
-            throw new Error("No dataset query found for this card.");
-        }
+      if (!getDatasetQuery) {
+        throw new Error("No dataset query found for this card.");
+      }
 
-        // Create a new question object based on the fetched card's dataset query
-        const newQuestion = Question.create({
-            databaseId: getDatasetQuery.database,
-            name: fetchedCard.name,
-            type: "query",
-            display: fetchedCard.display,
-            visualization_settings: {},
-            dataset_query: getDatasetQuery,
-        });
+      // Create a new question object based on the fetched card's dataset query
+      const newQuestion = Question.create({
+        databaseId: getDatasetQuery.database,
+        name: fetchedCard.name,
+        type: fetchedCard.query_type,
+        display: fetchedCard.display,
+        visualization_settings: {},
+        dataset_query: getDatasetQuery,
+        isExample: false
+      });
 
-        // Generate a unique hash for this question
-        const itemToHash = {
-            dataset_query: {
-                database: getDatasetQuery.database,
-                type: getDatasetQuery.type,
-                query: getDatasetQuery.query
-            },
+      // Generate a unique hash for this question
+      let itemToHash;
+      if (fetchedCard.query_type === "query") {
+        itemToHash = {
+          dataset_query: {
+            database: getDatasetQuery.database,
+            type: getDatasetQuery.type,
+            query: getDatasetQuery.query
+          },
 
-            display: fetchedCard.display,
-            visualization_settings: {},
-            type: "question",
+          display: fetchedCard.display,
+          visualization_settings: {},
+          type: "question",
         };
-        const hash = adhocQuestionHash(itemToHash);
-        // Append new values safely by ensuring prevCard is always an array
-        useGraphInput.setCard((prevCard: any) => Array.isArray(prevCard) ? [...prevCard, { ...fetchedCard, hash, typeQuery: getDatasetQuery.type }] : [{ ...fetchedCard, hash, typeQuery: getDatasetQuery.type }]);
-        useGraphInput.setDefaultQuestion((prevDefaultQuestion: any) => Array.isArray(prevDefaultQuestion) ? [...prevDefaultQuestion, newQuestion] : [newQuestion]);
-        useGraphInput.setResult((prevResult: any) => Array.isArray(prevResult) ? [...prevResult, queryCard] : [queryCard]);
-        useGraphInput.setCardHash((prevCardHash: any) => Array.isArray(prevCardHash) ? [...prevCardHash, hash] : [hash]);
+      } else {
+        itemToHash = {
+          dataset_query: {
+            database: getDatasetQuery.database,
+            type: getDatasetQuery.type,
+            native: getDatasetQuery.native
+          },
 
-        return fetchedCard; 
+          display: fetchedCard.display,
+          visualization_settings: {},
+          type: "question",
+        };
+      }
+      const hash = adhocQuestionHash(itemToHash);
+      // Append new values safely by ensuring prevCard is always an array
+      useGraphInput.setCard((prevCard: any) => Array.isArray(prevCard) ? [...prevCard, { ...fetchedCard, hash, typeQuery: getDatasetQuery.type }] : [{ ...fetchedCard, hash, typeQuery: getDatasetQuery.type }]);
+      useGraphInput.setDefaultQuestion((prevDefaultQuestion: any) => Array.isArray(prevDefaultQuestion) ? [...prevDefaultQuestion, newQuestion] : [newQuestion]);
+      useGraphInput.setResult((prevResult: any) => Array.isArray(prevResult) ? [...prevResult, queryCard] : [queryCard]);
+      useGraphInput.setCardHash((prevCardHash: any) => Array.isArray(prevCardHash) ? [...prevCardHash, hash] : [hash]);
+
+      return fetchedCard;
     } catch (error) {
-        console.error("Error fetching card content:", error);
+      console.error("Error fetching card content:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
     return undefined;
-};
+  };
 
   const setSelectedArtifact = (index: number) => {
     setUpdateRenderedArtifactRequired(true);

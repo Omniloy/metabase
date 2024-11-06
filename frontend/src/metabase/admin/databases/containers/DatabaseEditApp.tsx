@@ -104,7 +104,6 @@ type DatabaseEditErrorType = {
 };
 
 function DatabaseEditApp(props: DatabaseEditAppProps) {
-  console.log("🚀 ~ DatabaseEditApp ~ props:", props);
   const {
     database,
     deleteDatabase,

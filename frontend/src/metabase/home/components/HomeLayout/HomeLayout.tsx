@@ -2,64 +2,40 @@ import { useEffect, useMemo, useState } from "react";
 import { LayoutRoot, ContentContainer, ChatSection } from "./HomeLayout.styled";
 import { ChatGreeting } from "metabase/browse/components/ChatItems/Welcome";
 import ChatPrompt from "metabase/browse/components/ChatItems/Prompt";
-import { useDispatch, useSelector } from "metabase/lib/redux";
+import { useDispatch } from "metabase/lib/redux";
 import {
-  getInitialMessage,
   setInitialMessage
 } from "metabase/redux/initialMessage";
 import { setDBInputValue, setCompanyName, setInsightDBInputValue, getDBInputValue } from "metabase/redux/initialDb";
 import { setInitialSchema, setInitialInsightSchema } from "metabase/redux/initialSchema";
-import ChatAssistant from "metabase/query_builder/components/ChatAssistant";
-import {
-  BrowseContainer,
-  BrowseMain,
-} from "metabase/browse/components/BrowseContainer.styled";
 import { Flex, Stack, Icon } from "metabase/ui";
-import ChatHistory from "metabase/browse/components/ChatItems/ChatHistory";
 import { useListDatabasesQuery, useGetDatabaseMetadataWithoutParamsQuery, skipToken } from "metabase/api";
 import LoadingSpinner from "metabase/components/LoadingSpinner";
-import { generateRandomId } from "metabase/lib/utils";
-import { getSuggestions } from "metabase/redux/suggestionsSlice";
 import { NoDatabaseError, SemanticError } from "metabase/components/ErrorPages";
 import { Client } from "@langchain/langgraph-sdk";
 import { Client as ClientSmith } from "langsmith/client";
 import { useSetting } from "metabase/common/hooks";
 import { t } from "ttag";
-import { CardApi } from "metabase/services";
-import { AnimatedStack } from "metabase/query_builder/components/ChatBox";
-import { Canvas, User } from "metabase/query_builder/components/Canvas/Canvas";
+import { Canvas } from "metabase/query_builder/components/Canvas/Canvas";
 
 export const HomeLayout = () => {
-  const initialMessage = useSelector(getInitialMessage);
-  const suggestions = useSelector(getSuggestions);
-  const metabase_id_back = localStorage.getItem("metabase_id_back")
   const [inputValue, setInputValue] = useState("");
   const [showChatAssistant, setShowChatAssistant] = useState(false);
-  const [selectedChatHistory, setSelectedChatHistory] = useState([]);
-  const [selectedThreadId, setSelectedThreadId] = useState(null);
   const [selectedChatType, setSelectedChatType] = useState("default");
   const [selectedChatHistoryType, setSelectedChatHistoryType] =
     useState("dataAgent");
-  const [oldCardId, setOldCardId] = useState(null);
   const [insights, setInsights] = useState([]);
   const [hasDatabases, setHasDatabases] = useState<boolean>(false)
   const [dbId, setDbId] = useState<number | null>(null)
   const [schema, setSchema] = useState<any[]>([]);
-  const [messages, setMessages] = useState([]);
-  const [threadId, setThreadId] = useState(null)
-  const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [insightDB, setInsightDB] = useState<number | null>(null);
   const [insightSchema, setInsightSchema] = useState<any[]>([]);
-  const [isStackVisible, setIsStackVisible] = useState(false);
-  const [user, setUser] = useState<User>({id: '1'});
   const langchain_url =
     "https://assistants-prod-9c6885f051b75a548b0496804051487b.default.us.langgraph.app";
   const langchain_key = "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";
   const [client, setClient] = useState<any>(null);
   const [clientSmith, setSmithClient] = useState<any>(null);
-  const [modelSchema, setModelSchema] = useState([])
-  const [shouldRefetchHistory, setShouldRefetchHistory] = useState(false); // State to trigger chat history refresh
   const siteName = useSetting("site-name");
   const formattedSiteName = siteName
   ? siteName.replace(/\s+/g, "_").toLowerCase()
@@ -78,33 +54,6 @@ export const HomeLayout = () => {
 
   }, [langchain_url, langchain_key]);
   
-
-  useEffect(() => {
-    const getCards = async () => {
-      try {
-        const cardsList = await CardApi.list();
-        const modelCards = cardsList
-          .filter((card: any) => card.type === "model")
-          .map((card: any) => ({
-            id: `card__${card.id}`,
-            model_schema: (card.result_metadata || []).map((metadata: any) => {
-              const { field_ref, ...rest } = metadata; 
-              return rest;
-            }),
-            name: card.name,
-            description: card.description
-          }));
-
-        setModelSchema(modelCards);
-      } catch (error) {
-        console.error("Error fetching cards:", error);
-      }
-    };
-  
-    getCards();
-  }, []);
-
-
 
   const dispatch = useDispatch();
   const {
@@ -216,27 +165,6 @@ export const HomeLayout = () => {
     setShowChatAssistant(true);
 
     setInputValue(""); // Clear the input value
-  };
-
-  const handleStartNewChat = async () => {
-    try {
-      if (!client) return; 
-      const createdThread = await client.threads.create();
-      setSelectedThreadId(null);
-      setThreadId(createdThread);
-
-      setMessages([]);
-      setInputValue("");
-
-      setOldCardId(null);
-      setIsStackVisible(!isStackVisible);
-    } catch (error) {
-      console.error("Error creating new chat thread:", error);
-    }
-  };
-
-  const toggleChatHistory = () => {
-    setIsChatHistoryOpen(!isChatHistoryOpen);
   };
 
   return (

@@ -167,30 +167,29 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
   const [inputValue, setInputValue] = useState("");
   const [showCodeStates, setShowCodeStates] = useState<ShowCodeStates>({});
   // const [combinedInsightsResult, setCombinedInsightsResult] = useState<Insight[]>([]);
-  console.log("ARTIFACT PROPS", props);
   let imageIndex = 0;
 
-      // useEffect(() => {
-      //   // Combine results when props change
-      //   if (props.insightsResult && props.insightsResult.length > 0 && props.insightsImg && props.insightsImg.length > 0) {
-      //     const combined = props.insightsResult.map((item: any) => {
-      //       if (item.type === "image" && imageIndex < props.insightsImg.length) {
-      //         const updatedItem = { ...item, value: props.insightsImg[imageIndex] };
-      //         imageIndex += 1;
-      //         return updatedItem;
-      //       }
-      //       return item; // Leave text entries and extra image entries unchanged
-      //     });
-      //     setCombinedInsightsResult(combined);
-      //     console.log("combinedInsightsResult", combinedInsightsResult);
-      //   }
-      // }, [props.insightsResult, props.insightsImg]);
-    const handleShowCode = (index:number) => {
-      setShowCodeStates(prevStates => ({
-        ...prevStates,
-        [index]: !prevStates[index]
-      }));
-    };
+  // useEffect(() => {
+  //   // Combine results when props change
+  //   if (props.insightsResult && props.insightsResult.length > 0 && props.insightsImg && props.insightsImg.length > 0) {
+  //     const combined = props.insightsResult.map((item: any) => {
+  //       if (item.type === "image" && imageIndex < props.insightsImg.length) {
+  //         const updatedItem = { ...item, value: props.insightsImg[imageIndex] };
+  //         imageIndex += 1;
+  //         return updatedItem;
+  //       }
+  //       return item; // Leave text entries and extra image entries unchanged
+  //     });
+  //     setCombinedInsightsResult(combined);
+  //     console.log("combinedInsightsResult", combinedInsightsResult);
+  //   }
+  // }, [props.insightsResult, props.insightsImg]);
+  const handleShowCode = (index: number) => {
+    setShowCodeStates(prevStates => ({
+      ...prevStates,
+      [index]: !prevStates[index]
+    }));
+  };
   const handleMouseUp = useCallback(() => {
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0 && contentRef.current) {
@@ -386,7 +385,7 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
       props.setSelectedBlocks(undefined);
     }
   }, [props.selectedBlocks, isSelectionActive]);
-  console.log("PROPS.ARTIFACT", props.artifact)
+
   const currentArtifactContent = props.artifact
     ? getArtifactContent(props.artifact)
     : undefined;
@@ -406,18 +405,30 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
     ? getArtifactContent(props.artifact).index - 1
     : 0;
   const cardId = props.card?.[currentArtifactIndex]?.id;
-
+  const cardData = props.card?.[currentArtifactIndex]
   const sqlQuery = props.sqlQuery?.[currentArtifactIndex];
   const toggleSqlQueryVisibility = () => setShowSqlQuery(!showSqlQuery);
 
+  // const handleVerify = () => {
+  //   if (cardId) {
+  //     const route = `/question/${cardId}`;
+  //     window.open(route, "_blank");
+  //   } else {
+  //     console.log("No card ID available for this index.");
+  //   }
+  // };
+
   const handleVerify = () => {
-    if (cardId) {
-      console.log("Card ID:", cardId);
-      dispatch(push(`/question/${cardId}`));
+    console.log("🚀 ~ handleVerify ~ cardData:", props.card?.[currentArtifactIndex])
+    if (props.card?.[currentArtifactIndex].original_card_id) {
+        const route = `/question/${props.card?.[currentArtifactIndex].id}`;
+        window.open(route, "_blank"); // Opens the route in a new tab
     } else {
-      console.log("No card ID available for this index.");
+        const route = `/question/${props.card?.[currentArtifactIndex].hash}`;
+        window.open(route, "_blank"); // Opens the route in a new tab
     }
-  };
+};
+
 
   const highlightCode = (code: any) => {
     return code.split('\n').map((line: any, i: any) => {
@@ -577,96 +588,96 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
           }}
         >
           <div style={{ height: "100%" }} ref={markdownRef}>
-          {props.insightsResult.length > 0 ? (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '20px',
-            }}>
-              {props.insightsResult.map((insight:any, index:number) => (
-                <div key={index} style={{
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '5px',
-                  backgroundColor: '#f9f9f9',
-                  width: '80%',
-                }}>
-                  {insight.type === 'image' ? (
-                    <img 
-                      src={insight.value} 
-                      alt="Insight Visualization" 
-                      style={{
-                        maxHeight: "100%",
-                        maxWidth: "100%",
-                      }}
-                    />
-                  ) : (
-                    <p style={{
-                      margin: 0,
-                      padding: '10px 0',
-                      fontSize: '14px',
-                      color: '#333',
-                      whiteSpace: 'pre-wrap'
-                    }}>
-                      {insight.value}
-                    </p>
-                  )}
-                  <div style={{
-          textAlign: 'right',
-          maxHeight: '400px',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          position: 'relative',
-          padding: '10px',
-          marginTop: '10px',
-        }}>
-           <button style={{
-            padding: '5px 10px',
-            fontSize: '14px',
-            backgroundColor: 'white',
-            color: '#587330',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }} onClick={() => handleShowCode(index)}>
-          {showCodeStates[index] ? 'Show Text' : 'Show Code'} &nbsp;&nbsp;<Icon name="chevronright" size={14} />
-        </button>
-          {!showCodeStates[index] ? (
-            <div style={{
-              textAlign: 'left',
-              marginTop: '10px',
-              padding: '5px',
-              border: '1px solid #eee',
-              borderRadius: '5px',
-              backgroundColor: '#f9f9f9'
-            }}>
-              <ReactMarkdown>{props.insightsText[index] || ''}</ReactMarkdown>
-            </div>
-          ) : (
-            <div style={{
-              textAlign: 'left',
-              marginTop: '10px',
-              padding: '5px',
-              border: '1px solid #eee',
-              borderRadius: '5px',
-              backgroundColor: '#f0f0f0'
-            }}>
-              <pre style={{
-                margin: 0,
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                whiteSpace: 'pre-wrap'
+            {props.insightsResult.length > 0 ? (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '20px',
               }}>
-                {highlightCode(props.insightsCode[index] || '')}
-              </pre>
-            </div>
-          )}
-          </div>
-                  <hr />
-                </div>
-              ))}
-            </div>
+                {props.insightsResult.map((insight: any, index: number) => (
+                  <div key={index} style={{
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    backgroundColor: '#f9f9f9',
+                    width: '80%',
+                  }}>
+                    {insight.type === 'image' ? (
+                      <img
+                        src={insight.value}
+                        alt="Insight Visualization"
+                        style={{
+                          maxHeight: "100%",
+                          maxWidth: "100%",
+                        }}
+                      />
+                    ) : (
+                      <p style={{
+                        margin: 0,
+                        padding: '10px 0',
+                        fontSize: '14px',
+                        color: '#333',
+                        whiteSpace: 'pre-wrap'
+                      }}>
+                        {insight.value}
+                      </p>
+                    )}
+                    <div style={{
+                      textAlign: 'right',
+                      maxHeight: '400px',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      position: 'relative',
+                      padding: '10px',
+                      marginTop: '10px',
+                    }}>
+                      <button style={{
+                        padding: '5px 10px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#587330',
+                        borderRadius: '5px',
+                        cursor: 'pointer'
+                      }} onClick={() => handleShowCode(index)}>
+                        {showCodeStates[index] ? 'Show Text' : 'Show Code'} &nbsp;&nbsp;<Icon name="chevronright" size={14} />
+                      </button>
+                      {!showCodeStates[index] ? (
+                        <div style={{
+                          textAlign: 'left',
+                          marginTop: '10px',
+                          padding: '5px',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          backgroundColor: '#f9f9f9'
+                        }}>
+                          <ReactMarkdown>{props.insightsText[index] || ''}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div style={{
+                          textAlign: 'left',
+                          marginTop: '10px',
+                          padding: '5px',
+                          border: '1px solid #eee',
+                          borderRadius: '5px',
+                          backgroundColor: '#f0f0f0'
+                        }}>
+                          <pre style={{
+                            margin: 0,
+                            fontFamily: 'monospace',
+                            fontSize: '14px',
+                            whiteSpace: 'pre-wrap'
+                          }}>
+                            {highlightCode(props.insightsCode[index] || '')}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                    <hr />
+                  </div>
+                ))}
+              </div>
             ) : props.card?.length > 0 && props.result?.length > 0 && props.defaultQuestion?.length > 0 ? (
 
               <div
@@ -747,7 +758,7 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
                         overflowWrap: "break-word",
                         wordBreak: "break-word",
                         backgroundColor: "#f9f9f9",
-                        borderTop: "1px solid #e0e0e0",
+                        borderTop: "1px solid #e0e0e0"
                       }}
                     >
                       <div style={styles.container}>

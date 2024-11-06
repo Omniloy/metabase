@@ -23,7 +23,6 @@ export const CubeDialog = ({
   handleSemanticView,
   onUpdateCube,
 }: CubeInfoDialogProps) => {
-  console.log("🚀 ~ cube:", cube);
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false); // State to control verify modal
 
   const handleVerify = () => {
