@@ -19,13 +19,16 @@ import ChatHistory from "metabase/browse/components/ChatItems/ChatHistory";
 import { useListDatabasesQuery, useGetDatabaseMetadataWithoutParamsQuery, skipToken } from "metabase/api";
 import LoadingSpinner from "metabase/components/LoadingSpinner";
 import { generateRandomId } from "metabase/lib/utils";
-import { getSuggestions } from "metabase/redux/suggestionsSlice";
+import { getSuggestions, setSuggestions } from "metabase/redux/suggestionsSlice";
 import { NoDatabaseError, SemanticError } from "metabase/components/ErrorPages";
 import { Client } from "@langchain/langgraph-sdk";
 import { Client as ClientSmith } from "langsmith/client";
 import { useSetting } from "metabase/common/hooks";
 import { t } from "ttag";
 import { CardApi } from "metabase/services";
+import { push } from "react-router-redux"; 
+import { HomeInitialOptions } from "metabase/browse/components/ChatItems/InitialOptions";
+
 
 export const HomeLayout = () => {
   const initialMessage = useSelector(getInitialMessage);
@@ -60,10 +63,12 @@ export const HomeLayout = () => {
   const formattedSiteName = siteName
     ? siteName.replace(/\s+/g, "_").toLowerCase()
     : "";
+  const initialCompanyName = formattedSiteName;
+
 
   useEffect(() => {
     const initializeClient = async () => {
-      const clientInstance = new Client({ apiUrl: langchain_url, apiKey: langchain_key });
+      const clientInstance = new Client();
       const clientSmithInstance = new ClientSmith({ apiKey: langchain_key })
       setSmithClient(clientSmithInstance)
       setClient(clientInstance);
@@ -214,6 +219,30 @@ export const HomeLayout = () => {
     setInputValue(""); // Clear the input value
   };
 
+  const handleGetSuggestions = async () => {
+    const thread = await client.threads.create();
+    const streamResponse = client.runs.stream(thread.thread_id, "", {
+      input: {company_name: "dev_app", database_id: 15, schema: modelSchema, session_token: metabase_id_back },
+      config: { recursion_limit: 25 },
+      streamMode: "messages",
+    });
+    console.log({streamResponse})
+  };
+
+  useEffect(() => {
+    handleGetSuggestions()
+  }, [client, suggestions, modelSchema]);
+
+  const handleSuggestionClick = (message: string) => {
+    dispatch(setInitialMessage(message)); // Set the initial message from the card in Redux
+    if (window.location.pathname === "/") {
+      dispatch(push("/browse/chat")); // Navigate to /browse/chat
+    } else if (window.location.pathname === "/browse/insights") {
+      setShowChatAssistant(true); // Show the ChatAssistant component
+    }
+    setInputValue(""); // Clear the input value if needed (or skip this line)
+  };
+
   const handleStartNewChat = async () => {
     try {
       if (!client) return;
@@ -276,7 +305,20 @@ export const HomeLayout = () => {
                   <LayoutRoot data-testid="home-page" style={{ display: "flex", flexDirection: "row", padding: "4rem 4rem 2rem" }}>
                     <div style={{ display: "flex", flexDirection: "column", minHeight: "100%", width: "70%", justifyContent: "space-between" }}>
                       <ContentContainer>
-                        <ChatGreeting chatType={selectedChatType} />
+                        <ChatGreeting chatType={selectedChatType}  />
+                        {suggestions.suggestions ? (
+                          <HomeInitialOptions suggestions={suggestions.suggestions} chatType={selectedChatType} onClick={handleSuggestionClick}/>
+                        ) : (
+                          // Mientras no haya sugerencias, mostramos un mensaje de carga
+                          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+                              <p style={{ fontSize: "16px", color: "#76797D", fontWeight: "500", marginBottom: "1rem" }}>
+                                {t`Loading suggestions...`}
+                              </p>
+                              <LoadingSpinner />
+                            </div>
+                          </div>
+                        )}
                       </ContentContainer>
                       {schema.length > 0 ? (
                         <ChatSection>

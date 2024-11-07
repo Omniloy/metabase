@@ -35,7 +35,7 @@ export const HomeInitialOptions = ({ suggestions, chatType, onClick }: HomeIniti
     <HomeInitialOptionsView
       database={database}
       candidates={candidateListState.data}
-      suggestions={chatType === 'insights' ? suggestions.insightsSuggestions.slice(0, 2) : suggestions.getDataSuggestions.slice(0, 2)}
+      suggestions={chatType === 'insights' ? suggestions.slice(0, 2) : suggestions.slice(2, 4)}
       onClick={onClick}
     />
   );
