@@ -167,7 +167,7 @@
                   (->> (cards-for-filter-option :database database_id)
                        (sort-by :created_at #(compare %2 %1))  ;; Orden descendente
                        (take 100)                             ;; Limitar a 100
-                       (map #(select-keys % [:id :name :description :dataset_query :visualization_settings]))
+                       (map #(select-keys % [:id :name :description :dataset_query :visualization_settings :isExample :archived_directly]))
                        (into []))
                   ;; Comportamiento por defecto si no se proporciona database_id
                   (let [cards (filter mi/can-read? (cards-for-filter-option f model_id))
