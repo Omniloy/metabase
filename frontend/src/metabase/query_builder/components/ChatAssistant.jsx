@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useDispatch } from "metabase/lib/redux";
 import { Box, Button, Icon } from "metabase/ui";
-import Input from "metabase/core/components/Input";
+
 import TextArea from "metabase/core/components/TextArea";
 import ChatMessageList from "metabase/components/ChatMessageList/ChatMessageList";
 import FeedbackDialog from "metabase/components/FeedbackDialog/FeedbackDialog";
@@ -9,7 +9,7 @@ import CubeRequestDialog from "metabase/components/CubeRequest/CubeRequestDialog
 import { ChatCardApi } from "metabase/services";
 import Question from "metabase-lib/v1/Question";
 import { push } from "react-router-redux";
-import Modal from "metabase/components/Modal";
+
 import { generateRandomId } from "metabase/lib/utils";
 import {
     adhocQuestionHash
@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 import { useSetting } from "metabase/common/hooks";
 
 
-const ChatAssistant = ({ metabase_id_back, client, clientSmith, selectedMessages, selectedThreadId, setSelectedThreadId, chatType, initial_message, setInitialMessage, setMessages, setInputValue, setThreadId, threadId, inputValue, messages, isChatHistoryOpen, setShowButton, setShouldRefetchHistory, modelSchema }) => {
+const ChatAssistant = ({ metabase_id_back, client, clientSmith, selectedMessages, selectedThreadId, setSelectedThreadId, chatType, initial_message, setInitialMessage, setMessages, setInputValue, setThreadId, threadId, inputValue, messages, isChatHistoryOpen, setShowButton, setShouldRefetchHistory, modelSchema, customDbValue }) => {
     const siteName = useSetting("site-name");
     const formattedSiteName = siteName
         ? siteName.replace(/\s+/g, "_").toLowerCase()
@@ -458,7 +458,7 @@ const ChatAssistant = ({ metabase_id_back, client, clientSmith, selectedMessages
             const databaseID = chatType === 'insights' ? initialInsightDbName : initialDbName;
 
             const streamResponse = client.runs.stream(thread.thread_id, agent.assistant_id, {
-                input: { messages: messagesToSend, company_name: initialCompanyName, database_id: databaseID, schema: modelSchema, session_token: metabase_id_back, collection_id: 2 },
+                input: { messages: messagesToSend, company_name: initialCompanyName, database_id: customDbValue ? customDbValue : databaseID, schema: modelSchema, session_token: metabase_id_back, collection_id: 2 },
                 config: { recursion_limit: 25 },
                 streamMode: "messages",
             });
@@ -964,20 +964,6 @@ const ChatAssistant = ({ metabase_id_back, client, clientSmith, selectedMessages
                 ) : (
 
                     <>
-                        <Button
-                            variant="outlined"
-                            style={{
-                                position: "absolute",
-                                top: "16px",
-                                right: "16px",
-                                cursor: "pointer",
-                                padding: "8px",
-                                color: "#FFF",
-                                borderRadius: "50%",
-                            }}
-                            onClick={() => setIsDBModalOpen(true)}
-                        >
-                        </Button>
                         <div
                             style={{
                                 flex: "1 1 auto",
@@ -1129,29 +1115,6 @@ const ChatAssistant = ({ metabase_id_back, client, clientSmith, selectedMessages
                 )}
 
             </Box>
-
-            {isDBModalOpen && (
-                <Modal isOpen={isDBModalOpen} onClose={() => setIsDBModalOpen(false)}>
-                    <div style={{ padding: "20px" }}>
-                        <h2 style={{ marginBottom: "10px" }}>Enter DB Value</h2>
-                        <Input
-                            id="dbInput"
-                            type="text"
-                            value={dbInputValue}
-                            onChange={(e) => setDBInputValue(e.target.value)}
-                            style={{ marginBottom: "20px" }}
-                        />
-                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                            <Button variant="outlined" style={{ marginRight: "10px" }} onClick={() => setIsDBModalOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button variant="filled" onClick={() => setIsDBModalOpen(false)}>
-                                Save
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
             <FeedbackDialog
                 isOpen={isFeedbackDialogOpen}
                 onClose={handleFeedbackDialogOpen}

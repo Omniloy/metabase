@@ -14,7 +14,9 @@ import {
   BrowseContainer,
   BrowseMain,
 } from "metabase/browse/components/BrowseContainer.styled";
-import { Flex, Stack, Icon } from "metabase/ui";
+import Modal from "metabase/components/Modal";
+import Input from "metabase/core/components/Input";
+import { Flex, Stack, Icon, Button } from "metabase/ui";
 import ChatHistory from "metabase/browse/components/ChatItems/ChatHistory";
 import { useListDatabasesQuery, useGetDatabaseMetadataWithoutParamsQuery, skipToken } from "metabase/api";
 import LoadingSpinner from "metabase/components/LoadingSpinner";
@@ -28,6 +30,7 @@ import { t } from "ttag";
 import { CardApi } from "metabase/services";
 
 export const HomeLayout = () => {
+  const [isDBModalOpen, setIsDBModalOpen] = useState(false);
   const initialMessage = useSelector(getInitialMessage);
   const suggestions = useSelector(getSuggestions);
   const metabase_id_back = localStorage.getItem("metabase_id_back")
@@ -61,6 +64,8 @@ export const HomeLayout = () => {
     ? siteName.replace(/\s+/g, "_").toLowerCase()
     : "";
 
+  const [dbInputValueModal, setDBInputValueModal] = useState("");
+
   useEffect(() => {
     const initializeClient = async () => {
       const clientInstance = new Client({ apiUrl: langchain_url, apiKey: langchain_key });
@@ -73,7 +78,7 @@ export const HomeLayout = () => {
     }
 
   }, [langchain_url, langchain_key]);
-  
+
 
   useEffect(() => {
     const getCards = async () => {
@@ -84,7 +89,7 @@ export const HomeLayout = () => {
           .map((card: any) => ({
             id: `card__${card.id}`,
             model_schema: (card.result_metadata || []).map((metadata: any) => {
-              const { field_ref, visibility_type, coercion_strategy, settings, ...rest } = metadata; 
+              const { field_ref, visibility_type, coercion_strategy, settings, ...rest } = metadata;
               return rest;
             }),
             name: card.name,
@@ -96,7 +101,7 @@ export const HomeLayout = () => {
         console.error("Error fetching cards:", error);
       }
     };
-  
+
     getCards();
   }, []);
 
@@ -115,13 +120,13 @@ export const HomeLayout = () => {
       if (databases.length > 0) {
         setInsightDB(databases[0].id as number)
         dispatch(setInsightDBInputValue(databases[0].id as number));
-        
+
         setShowButton(true);
         dispatch(setDBInputValue(databases[0].id as number));
         dispatch(setCompanyName(formattedSiteName as string));
         setDbId(databases[0].id as number)
-      } 
-      
+      }
+
     }
   }, [databases]);
 
@@ -243,6 +248,22 @@ export const HomeLayout = () => {
             <NoDatabaseError />
           ) : (
             <>
+              <Button
+                variant="outlined"
+                style={{
+                  position: "absolute",
+                  top: "1rem",
+                  right: "1rem",
+                  cursor: "pointer",
+                  padding: "8px",
+                  borderRadius: "50%",
+                  zIndex: "900"
+                }}
+                onClick={() => setIsDBModalOpen(true)}
+              >
+                <Icon name="database" size={20} />
+              </Button>
+              
               {!dbId && window.location.pathname === "/browse/chat" ? <SemanticError details={undefined} /> :
                 (window.location.pathname !== "/browse/chat" ? (
                   <LayoutRoot data-testid="home-page">
@@ -392,7 +413,8 @@ export const HomeLayout = () => {
                   setShowButton={setShowButton}
                   setShouldRefetchHistory={setShouldRefetchHistory}
                   modelSchema={modelSchema}
-              />
+                  customDbValue={dbInputValueModal}
+                />
               </Stack>
               {isChatHistoryOpen && selectedChatType !== "insights" && (
                 <Stack
@@ -417,6 +439,28 @@ export const HomeLayout = () => {
             </Flex>
           </BrowseMain>
         </BrowseContainer>
+      )}
+      {isDBModalOpen && (
+        <Modal isOpen={isDBModalOpen} onClose={() => setIsDBModalOpen(false)}>
+          <div style={{ padding: "20px" }}>
+            <h2 style={{ marginBottom: "10px" }}>Enter DB Value</h2>
+            <Input
+              id="dbInput"
+              type="text"
+              value={dbInputValueModal}
+              onChange={(e) => setDBInputValueModal(e.target.value)}
+              style={{ marginBottom: "20px" }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button variant="outlined" style={{ marginRight: "10px" }} onClick={() => setIsDBModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="filled" onClick={() => setIsDBModalOpen(false)}>
+                Save
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </>
   );
