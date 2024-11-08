@@ -67,10 +67,8 @@ export function Canvas(props: CanvasProps) {
     setUpdateRenderedArtifactRequired,
     isArtifactSaved,
     firstTokenReceived,
-    selectedBlocks
-    // card, 
-    // result,
-    // defaultQuestion
+    selectedBlocks,
+    streamError
   } = useGraph({
     userId: props.user.id,
     threadId,
@@ -87,7 +85,7 @@ export function Canvas(props: CanvasProps) {
     setWholeInsights,
     setSqlQuery
   });
-
+  const [streamErrorCanvas, setStreamErrorCanvas] = useState<any>(streamError);
   const {
     reflections,
     deleteReflections,
@@ -97,6 +95,9 @@ export function Canvas(props: CanvasProps) {
     assistantId,
     userId: props.user.id,
   });
+  useEffect(() => {
+    setStreamErrorCanvas(streamError)
+  }, [streamError])
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -195,7 +196,7 @@ export function Canvas(props: CanvasProps) {
 
   return (
     <main style={{
-      display: chatStarted ? 'flex' : '', 
+      display: 'flex', 
       flexDirection: 'row',
       justifyItems: 'center',
       height: '100%'
@@ -204,7 +205,8 @@ export function Canvas(props: CanvasProps) {
         <div
           style={{
             width: "100%",
-            marginRight: "auto"
+            marginRight: "auto",
+            height: "100%"
           }}
         >
           <ArtifactRenderer
@@ -241,6 +243,7 @@ export function Canvas(props: CanvasProps) {
             insightsResult={insightsResult}
             wholeInsights={wholeInsights}
             sqlQuery={sqlQuery}
+            streamError={streamErrorCanvas.isError}
           />
         </div>
       )}
@@ -255,6 +258,7 @@ export function Canvas(props: CanvasProps) {
         }}
       >
         <ContentComposerChatInterface
+          errorMessage={streamErrorCanvas.message}
           userId={props.user.id}
           getUserThreads={getUserThreads}
           isUserThreadsLoading={isUserThreadsLoading}

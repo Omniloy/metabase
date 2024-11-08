@@ -51,7 +51,9 @@ import { isArtifactCodeContent } from "../lib/artifact_content_types"
 import VisualizationResult from "metabase/query_builder/components/VisualizationResult";
 import { Icon } from "metabase/ui";
 import ReactMarkdown from "react-markdown";
-import { highlightCode } from "metabase/components/Insight/utils";
+import Lottie from "lottie-react";
+import loadingAnimation from "metabase/ui/components/animations/analyze_animation.json"
+import errorAnimation from "metabase/ui/components/animations/warning_animation.json"
 
 export interface ArtifactRendererProps {
   userId: string;
@@ -84,7 +86,8 @@ export interface ArtifactRendererProps {
   insightsCode: any;
   insightsResult: any;
   wholeInsights: any;
-  sqlQuery?: any
+  sqlQuery?: any;
+  streamError:boolean;
 }
 
 interface SelectionBox {
@@ -149,9 +152,7 @@ const styles: { [key: string]: CSSProperties } = {
 };
 
 export function ArtifactRenderer(props: ArtifactRendererProps) {
-  // const { toast } = useToast();
   const [showSqlQuery, setShowSqlQuery] = useState(false);
-  const dispatch = useDispatch();
   const editorRef = useRef<EditorView | null>(null);
   const markdownRef = useRef<HTMLDivElement>(null);
   const highlightLayerRef = useRef<HTMLDivElement>(null);
@@ -166,24 +167,7 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
   const [isSelectionActive, setIsSelectionActive] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [showCodeStates, setShowCodeStates] = useState<ShowCodeStates>({});
-  // const [combinedInsightsResult, setCombinedInsightsResult] = useState<Insight[]>([]);
-  let imageIndex = 0;
 
-  // useEffect(() => {
-  //   // Combine results when props change
-  //   if (props.insightsResult && props.insightsResult.length > 0 && props.insightsImg && props.insightsImg.length > 0) {
-  //     const combined = props.insightsResult.map((item: any) => {
-  //       if (item.type === "image" && imageIndex < props.insightsImg.length) {
-  //         const updatedItem = { ...item, value: props.insightsImg[imageIndex] };
-  //         imageIndex += 1;
-  //         return updatedItem;
-  //       }
-  //       return item; // Leave text entries and extra image entries unchanged
-  //     });
-  //     setCombinedInsightsResult(combined);
-  //     console.log("combinedInsightsResult", combinedInsightsResult);
-  //   }
-  // }, [props.insightsResult, props.insightsImg]);
   const handleShowCode = (index: number) => {
     setShowCodeStates(prevStates => ({
       ...prevStates,
@@ -237,60 +221,6 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
     },
     [isSelectionActive]
   );
-
-  const handleSelectionBoxMouseDown = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-  }, []);
-
-  const handleSubmit = async (
-    e:
-      | FormEvent<HTMLFormElement>
-      | React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
-    e.preventDefault();
-
-    const artifactContent = props.artifact
-      ? getArtifactContent(props.artifact)
-      : undefined;
-    if (
-      !selectionIndexes &&
-      artifactContent &&
-      isArtifactCodeContent(artifactContent)
-    ) {
-      // toast({
-      //   title: "Selection error",
-      //   description:
-      //     "Failed to get start/end indexes of the selected text. Please try again.",
-      //   duration: 5000,
-      // });
-      return;
-    }
-
-    if (selectionBox && props.artifact) {
-      const humanMessage = new HumanMessage({
-        content: inputValue,
-        id: uuidv4(),
-      });
-
-      props.setMessages((prevMessages) => [...prevMessages, humanMessage]);
-
-      setIsInputVisible(false);
-      setInputValue("");
-      setSelectionBox(undefined);
-      setSelectionIndexes(undefined);
-      setIsSelectionActive(false);
-
-      await props.streamMessage({
-        messages: [convertToOpenAIFormat(humanMessage)],
-        ...(selectionIndexes && {
-          highlightedCode: {
-            startCharIndex: selectionIndexes.start,
-            endCharIndex: selectionIndexes.end,
-          },
-        }),
-      });
-    }
-  };
 
   useEffect(() => {
     document.addEventListener("mouseup", handleMouseUp);
@@ -386,6 +316,44 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
     }
   }, [props.selectedBlocks, isSelectionActive]);
 
+  if (props.streamError) {
+    return (
+      <div
+        style={{
+          padding: "16px",
+          height: "90%",
+          width: "500px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginLeft: "auto",
+          marginRight: "auto"
+        }}
+      >
+        <Lottie animationData={errorAnimation} loop={false}/>
+      </div>
+    );
+  }
+  if (!props.artifact || !props.card?.length || !props.result?.length || !props.defaultQuestion?.length) {
+    return (
+      <div
+      style={{
+        padding: "16px",
+        height: "90%",
+        width: "500px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        marginLeft: "auto",
+        marginRight: "auto"
+      }}
+      >
+        <Lottie animationData={loadingAnimation} />
+      </div>
+    );
+  }
+
+
   const currentArtifactContent = props.artifact
     ? getArtifactContent(props.artifact)
     : undefined;
@@ -405,29 +373,20 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
     ? getArtifactContent(props.artifact).index - 1
     : 0;
   const cardId = props.card?.[currentArtifactIndex]?.id;
-  const cardData = props.card?.[currentArtifactIndex]
-  const sqlQuery = props.sqlQuery?.[currentArtifactIndex];
+  const cardHash = props.card?.[currentArtifactIndex].hash
+  const sqlQuery = props.result?.[currentArtifactIndex].data.native_form.query;
   const toggleSqlQueryVisibility = () => setShowSqlQuery(!showSqlQuery);
 
-  // const handleVerify = () => {
-  //   if (cardId) {
-  //     const route = `/question/${cardId}`;
-  //     window.open(route, "_blank");
-  //   } else {
-  //     console.log("No card ID available for this index.");
-  //   }
-  // };
 
   const handleVerify = () => {
-    console.log("🚀 ~ handleVerify ~ cardData:", props.card?.[currentArtifactIndex])
     if (props.card?.[currentArtifactIndex].original_card_id) {
-        const route = `/question/${props.card?.[currentArtifactIndex].id}`;
-        window.open(route, "_blank"); // Opens the route in a new tab
+      const route = `/question/${cardId}`;
+      window.open(route, "_blank"); // Opens the route in a new tab
     } else {
-        const route = `/question/${props.card?.[currentArtifactIndex].hash}`;
-        window.open(route, "_blank"); // Opens the route in a new tab
+      const route = `/question#${cardHash}`;
+      window.open(route, "_blank"); // Opens the route in a new tab
     }
-};
+  };
 
 
   const highlightCode = (code: any) => {
@@ -463,19 +422,6 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
             style={{ fontSize: "1.25rem", fontWeight: "500", color: "#4B5563" }}>
             {currentArtifactContent.title}
           </h1>
-          <span style={{ marginTop: "auto" }}>
-            {props.isArtifactSaved ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "4px", color: "#9CA3AF" }}>
-                <p style={{ fontSize: "0.75rem", fontWeight: "400" }}>Saved</p>
-                <CircleCheck style={{ width: "10px", height: "10px" }} />
-              </span>
-            ) : (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "4px", color: "#9CA3AF" }}>
-                <p style={{ fontSize: "0.75rem", fontWeight: "400" }}>Saving</p>
-                <LoaderCircle style={{ width: "10px", height: "10px", animation: "spin 1s linear infinite" }} />
-              </span>
-            )}
-          </span>
         </div>
         <div style={{
           position: "absolute",
@@ -529,46 +475,8 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
             />
           </TooltipIconButton>
         </div>
-        {/* <div className="ml-auto mt-[10px] mr-[6px]">
-          <ReflectionsDialog
-            handleGetReflections={props.handleGetReflections}
-            isLoadingReflections={props.isLoadingReflections}
-            reflections={props.reflections}
-            handleDeleteReflections={props.handleDeleteReflections}
-          />
-        </div> */}
-        {/* <div style={{ paddingRight: "8px", paddingTop: "8px" }}>
-          <TooltipIconButton
-            tooltip="Copy"
-            variant="ghost"
-            style={{ width: "fit-content", height: "fit-content", padding: "8px", transition: "colors 0.2s ease-in" }}
-            delayDuration={400}
-            onClick={() => {
-              try {
-                const text = isArtifactCodeContent(currentArtifactContent)
-                  ? currentArtifactContent.code
-                  : currentArtifactContent.fullMarkdown;
-                navigator.clipboard.writeText(text).then(() => {
-                  // toast({
-                  //   title: "Copied to clipboard",
-                  //   description: "The canvas content has been copied.",
-                  //   duration: 5000,
-                  // });
-                });
-              } catch (_) {
-                // toast({
-                //   title: "Copy error",
-                //   description:
-                //     "Failed to copy the canvas content. Please try again.",
-                //   duration: 5000,
-                // });
-              }
-            }}
-          >
-            <Copy style={{ width: "16px", height: "16px", color: "#4B5563" }} />
-          </TooltipIconButton>
-        </div> */}
       </div>
+
       <div
         ref={contentRef}
         style={{
@@ -579,7 +487,6 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
           paddingTop: currentArtifactContent.type === "code" ? "10px" : undefined,
         }}
       >
-
         <div
           style={{
             position: "relative",
@@ -587,7 +494,8 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
             minWidth: "100%",
           }}
         >
-          <div style={{ height: "100%" }} ref={markdownRef}>
+          <div style={{ height: "100%", width: "100%" }} ref={markdownRef}>
+
             {props.insightsResult.length > 0 ? (
               <div style={{
                 display: 'flex',
@@ -678,7 +586,9 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
                   </div>
                 ))}
               </div>
-            ) : props.card?.length > 0 && props.result?.length > 0 && props.defaultQuestion?.length > 0 ? (
+            ) : (Array.isArray(props.card) && props.card.length > 0) &&
+              (Array.isArray(props.result) && props.result.length > 0) &&
+              (Array.isArray(props.defaultQuestion) && props.defaultQuestion.length > 0) ? (
 
               <div
                 style={{
@@ -697,7 +607,7 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
                     padding: "1rem",
                     borderRadius: "16px",
                     boxShadow: 3,
-                    overflow: "visible", // Allow the card to grow as content is added
+                    overflow: "visible",
                   }}
                 >
                   <CardContent
@@ -774,9 +684,7 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
               </div>
 
 
-            ) : (
-              <div style={{ padding: "16px", color: "#FF0000" }}>Loading Visualization...</div>
-            )}
+            ) : (null)}
 
             {currentArtifactContent.type === "text" ? (
               <TextRenderer
@@ -811,91 +719,13 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
               />
             ) : null}
           </div>
-          <div
+          {/* <div
             ref={highlightLayerRef}
             style={{ position: "absolute", top: "0", left: "0", width: "100%", height: "100%", pointerEvents: "none" }}
           // className="absolute top-0 left-0 w-full h-full pointer-events-none"
-          />
+          /> */}
         </div>
-        {selectionBox && isSelectionActive && (
-          <div
-            ref={selectionBoxRef}
-            className={cn(
-              "absolute bg-white border border-gray-200 shadow-md p-2 flex gap-2",
-              isInputVisible ? "rounded-3xl" : "rounded-md"
-            )}
-            style={{
-              top: `${selectionBox.top + 60}px`,
-              left: `${selectionBox.left}px`,
-              width: isInputVisible ? "400px" : "250px",
-              marginLeft: isInputVisible ? "0" : "150px",
-            }}
-            onMouseDown={handleSelectionBoxMouseDown}
-          >
-            {isInputVisible ? (
-              <form
-                onSubmit={handleSubmit}
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                }}
-              >
-                <Input
-                  style={{
-                    width: "100%",
-                    transition: "all 300ms ease-in-out",
-                    padding: "0.25rem",
-                    outline: "none",
-                    border: "0",
-                    boxShadow: "none",
-                  }}
-                  placeholder="Ask Open Canvas..."
-                  autoFocus
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                />
-                <Button
-                  onClick={(e) => handleSubmit(e)}
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                >
-                  <CircleArrowUp
-                    // className="cursor-pointer"
-                    style={{ cursor: "pointer" }}
-                    fill="black"
-                    stroke="white"
-                    size={30}
-                  />
-                </Button>
-              </form>
-            ) : (
-              <Button
-                variant="ghost"
-                onClick={() => setIsInputVisible(true)}
-                style={{
-                  transition: "all 300ms ease-in-out",
-                  width: "100%",
-                }}
-              >
-                Ask Open Canvas
-              </Button>
-            )}
-          </div>
-        )}
       </div>
-      {/* <CustomQuickActions
-        isTextSelected={isSelectionActive || props.selectedBlocks !== undefined}
-        userId={props.userId}
-        assistantId={props.assistantId}
-        streamMessage={props.streamMessage}
-        cardId={cardId}
-      /> */}
       {currentArtifactContent.type === "text" ? (
         <ActionsToolbar
           isTextSelected={
@@ -916,5 +746,6 @@ export function ArtifactRenderer(props: ArtifactRendererProps) {
         />
       ) : null}
     </div>
+
   );
 }

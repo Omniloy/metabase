@@ -6,7 +6,7 @@ import {
   useMessageStore,
   useThreadRuntime,
 } from "@assistant-ui/react";
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 
 import {
   ArrowDownIcon,
@@ -34,6 +34,7 @@ import { Icon } from "metabase/ui";
 interface AssistantMessageProps {
   sqlQuery?: string;
   toggleSqlModal: () => void;
+  errorMessage?: string;
 }
 
 export interface ThreadProps {
@@ -52,6 +53,7 @@ export interface ThreadProps {
   switchSelectedThread: (thread: ThreadType) => void;
   deleteThread: (id: string) => Promise<void>;
   sqlQuery: any;
+  errorMessage?: string;
 }
 
 interface QuickStartButtonsProps {
@@ -61,66 +63,6 @@ interface QuickStartButtonsProps {
   ) => void;
   composer: React.ReactNode;
 }
-
-const QuickStartPrompts = () => {
-  const threadRuntime = useThreadRuntime();
-
-  const handleClick = (text: string) => {
-    threadRuntime.append({
-      role: "user",
-      content: [{ type: "text", text }],
-    });
-  };
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '8px', color: '#4B5563' }}>
-      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-        <Button
-          onClick={(e) =>
-            handleClick((e.target as HTMLButtonElement).textContent || "")
-          }
-          variant="outline"
-          className="flex-1"
-          style={{ flex: 1, height: "2.25rem", padding: "0 1rem", border: "1px solid #e5e7eb", cursor: "pointer", borderRadius: "0.375rem" }}
-        >
-          Write me a TODO app in React
-        </Button>
-        <Button
-          onClick={(e) =>
-            handleClick((e.target as HTMLButtonElement).textContent || "")
-          }
-          variant="outline"
-          className="flex-1"
-          style={{ flex: 1, height: "2.25rem", padding: "0 1rem", border: "1px solid #e5e7eb", cursor: "pointer", borderRadius: "0.375rem" }}
-        >
-          Explain why the sky is blue in a short essay
-        </Button>
-      </div>
-      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-        <Button
-          onClick={(e) =>
-            handleClick((e.target as HTMLButtonElement).textContent || "")
-          }
-          variant="outline"
-          className="flex-1"
-          style={{ flex: 1, height: "2.25rem", padding: "0 1rem", border: "1px solid #e5e7eb", cursor: "pointer", borderRadius: "0.375rem" }}
-        >
-          Help me draft an email to my professor Craig
-        </Button>
-        <Button
-          onClick={(e) =>
-            handleClick((e.target as HTMLButtonElement).textContent || "")
-          }
-          variant="outline"
-          className="flex-1"
-          style={{ flex: 1, height: "2.25rem", padding: "0 1rem", border: "1px solid #e5e7eb", cursor: "pointer", borderRadius: "0.375rem" }}
-        >
-          Write a web scraping program in Python
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const QuickStartButtons = (props: QuickStartButtonsProps) => {
   const handleLanguageSubmit = (language: ProgrammingLanguageOptions) => {
@@ -138,9 +80,13 @@ const QuickStartButtons = (props: QuickStartButtonsProps) => {
 
 export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
   // const { toast } = useToast();
-  const { sqlQuery } = props;
+  const { sqlQuery, errorMessage } = props;
   useLangSmithLinkToolUI();
+  const [errorText, setErrorText] = useState<any>(errorMessage)
 
+  useEffect(() => {
+    setErrorText(errorMessage)
+  }, [errorMessage])
   const handleCreateThread = async () => {
     const thread = await props.createThread();
     if (!thread) {
@@ -154,35 +100,35 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
 
   return (
     <ThreadPrimitive.Root style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-     <div style={{ paddingTop: '12px', paddingLeft: '12px', paddingBottom: '8px', display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
-      {props.showNewThreadButton ? (
-        <Button
-          variant="outline"
-          style={{
-            transition: 'background-color 0.2s ease',
-            color: '#4B5563',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            cursor: "pointer",
-          }}
-          onClick={handleCreateThread}
-        >
-          <SquarePen />
-        </Button>
-      ) : null}
+      <div style={{ paddingTop: '12px', paddingLeft: '12px', paddingBottom: '8px', display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'center', justifyContent: 'space-between' }}>
+        {props.showNewThreadButton ? (
+          <Button
+            variant="outline"
+            style={{
+              transition: 'background-color 0.2s ease',
+              color: '#4B5563',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: "pointer",
+            }}
+            onClick={handleCreateThread}
+          >
+            <SquarePen />
+          </Button>
+        ) : null}
 
-      <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px', justifyContent: 'flex-end', gap: '8px', color: '#4B5563', flex: 1 }}>
-        <ThreadHistory
-          isUserThreadsLoading={props.isUserThreadsLoading}
-          userThreads={props.userThreads}
-          switchSelectedThread={props.switchSelectedThread}
-          deleteThread={props.deleteThread}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', marginRight: '4px', justifyContent: 'flex-end', gap: '8px', color: '#4B5563', flex: 1 }}>
+          <ThreadHistory
+            isUserThreadsLoading={props.isUserThreadsLoading}
+            userThreads={props.userThreads}
+            switchSelectedThread={props.switchSelectedThread}
+            deleteThread={props.deleteThread}
+          />
+        </div>
       </div>
-    </div>
-      <ThreadPrimitive.Viewport style={{ flex: '1', overflowY: 'auto', scrollBehavior: 'smooth', backgroundColor: 'inherit', paddingLeft: '16px'}}>
+      <ThreadPrimitive.Viewport style={{ flex: '1', overflowY: 'auto', scrollBehavior: 'smooth', backgroundColor: 'inherit', paddingLeft: '16px' }}>
         {!props.showNewThreadButton && (
           <ThreadWelcome
             handleQuickStart={props.handleQuickStart}
@@ -194,7 +140,7 @@ export const Thread: FC<ThreadProps> = (props: ThreadProps) => {
             UserMessage: UserMessage,
             EditComposer: EditComposer,
             AssistantMessage: () => (
-              <AssistantMessage sqlQuery={sqlQuery} toggleSqlModal={()=> console.log('SQL QUERY CARD: ', sqlQuery)} />
+              <AssistantMessage sqlQuery={sqlQuery} errorMessage={errorText} toggleSqlModal={() => console.log('SQL QUERY CARD: ', sqlQuery)} />
             ),
           }}
         />
@@ -235,11 +181,11 @@ const ThreadWelcome: FC<ThreadWelcomeProps> = (props: ThreadWelcomeProps) => {
   const [selectedChatType, setSelectedChatType] = useState("default");
   return (
     <ThreadPrimitive.Empty>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%'}}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
         <div style={{ textAlign: 'center', maxWidth: '768px', width: '100%', display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
           <ContentContainer>
-                        <ChatGreeting chatType={selectedChatType} />
-                      </ContentContainer>
+            <ChatGreeting chatType={selectedChatType} />
+          </ContentContainer>
           <div style={{ marginTop: '32px', width: '100%' }}>
             <QuickStartButtons
               composer={props.composer}
@@ -254,17 +200,17 @@ const ThreadWelcome: FC<ThreadWelcomeProps> = (props: ThreadWelcomeProps) => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root 
-      style={{ 
-        border: '1px solid rgba(99, 102, 241, 0.2)', 
-        display: 'flex', 
-        width: '100%', 
-        minHeight: '64px', 
-        flexWrap: 'wrap', 
-        alignItems: 'center', 
-        borderRadius: '0.5rem', 
-        padding: '10px', 
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)', 
+    <ComposerPrimitive.Root
+      style={{
+        border: '1px solid rgba(99, 102, 241, 0.2)',
+        display: 'flex',
+        width: '100%',
+        minHeight: '64px',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        borderRadius: '0.5rem',
+        padding: '10px',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
         transition: 'background-color 0.2s ease-in',
         backgroundColor: 'white'
       }}
@@ -273,18 +219,18 @@ const Composer: FC = () => {
         autoFocus
         placeholder="Write a message..."
         rows={1}
-        style={{ 
+        style={{
           flexGrow: 1,
           resize: 'none',
           border: 'none',
           backgroundColor: 'transparent',
-          padding: '1rem 0.5rem', 
-          fontSize: '0.875rem', 
+          padding: '1rem 0.5rem',
+          fontSize: '0.875rem',
           outline: 'none',
           cursor: 'text',
           height: '49px'
         }}
-        // className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
+      // className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
       />
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
@@ -298,7 +244,7 @@ const Composer: FC = () => {
         fontSize: '1rem', 
       }}
           > */}
-            <SendHorizontalIcon />
+          <SendHorizontalIcon />
           {/* </TooltipIconButton> */}
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
@@ -308,12 +254,12 @@ const Composer: FC = () => {
             tooltip="Cancel"
             variant="default"
             style={{
-        margin: '0.625rem 0',
-        padding: '0.5rem', 
-        transition: 'opacity 0.2s ease-in',
-        fontSize: '1rem', 
-      }}
-            // className="my-2.5 size-8 p-2 transition-opacity ease-in"
+              margin: '0.625rem 0',
+              padding: '0.5rem',
+              transition: 'opacity 0.2s ease-in',
+              fontSize: '1rem',
+            }}
+          // className="my-2.5 size-8 p-2 transition-opacity ease-in"
           >
             <CircleStopIcon />
           </TooltipIconButton>
@@ -372,22 +318,16 @@ const EditComposer: FC = () => {
   );
 };
 
-const AssistantMessage: FC<AssistantMessageProps> = ({ sqlQuery, toggleSqlModal }) => {
+const AssistantMessage: FC<AssistantMessageProps> = ({errorMessage}) => {
   return (
-    <MessagePrimitive.Root style={{ position: 'relative', display: 'grid', width: '100%', maxWidth: '640px', gridTemplateColumns: 'auto auto 1fr', gridTemplateRows: 'auto 1fr', padding: '16px' }}>
-      <Avatar style={{ gridColumnStart: 1, gridRow: 'span 2', gridRowStart: 1, marginRight: '16px' }}>
-        <AvatarFallback>A</AvatarFallback>
-      </Avatar>
-
-      <div style={{ color: '#111827', gridColumn: 'span 2', gridColumnStart: 2, gridRowStart: 1, margin: '6px 0', maxWidth: '400px', wordBreak: 'break-word', lineHeight: '1.75' }}>
-        <MessagePrimitive.Content components={{ Text: MarkdownText }} />
-        {/* {sqlQuery && sqlQuery.length > 0 && (
-          <Icon size={18} name="commandLine" onClick={toggleSqlModal}/>
-        )} */}
+    <MessagePrimitive.Root style={{ position: 'relative', display: 'grid', width: '100%', maxWidth: '640px', gridTemplateColumns: 'auto auto 1fr', gridTemplateRows: 'auto 1fr' }}>
+      <div style={{ backgroundColor: '#ededed', padding: '16px', color: errorMessage ? "red" : "#111827", borderRadius: '24px', gridColumn: 'span 2', gridColumnStart: 2, gridRowStart: 1, margin: '6px 0', maxWidth: '400px', wordBreak: 'break-word', lineHeight: '1.75' }}>
+          <MessagePrimitive.Content components={{ Text: MarkdownText }} />
       </div>
     </MessagePrimitive.Root>
   );
 };
+
 const CircleStopIcon = () => {
   return (
     <svg

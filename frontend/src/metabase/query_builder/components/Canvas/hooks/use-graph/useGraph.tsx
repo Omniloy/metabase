@@ -101,19 +101,12 @@ export interface UseGraphInput {
 }
 
 export function useGraph(useGraphInput: UseGraphInput) {
-  // const { toast } = useToast();
   const siteName = useSetting("site-name");
-  const initialSchema = useSelector(getInitialSchema);
-  // const [card, setCard] = useState<any>([]);
-  // const [cardHash, setCardHash] = useState<any>([]);
-  // const [result, setResult] = useState<any>([]);
-  // const [defaultQuestion, setDefaultQuestion] = useState<any>([]);
   const formattedSiteName = siteName
     ? siteName.replace(/\s+/g, "_").toLowerCase()
     : "";
   const initialDbName = useSelector(getDBInputValue);
   const initialCompanyName = formattedSiteName;
-  const { shareRun } = useRuns();
   const [modelSchema, setModelSchema] = useState([])
   const [messages, setMessages] = useState<BaseMessage[]>([]);
   const [artifact, setArtifact] = useState<ArtifactV3>();
@@ -129,6 +122,8 @@ export function useGraph(useGraphInput: UseGraphInput) {
       5000
     )
   ).current;
+  const [streamError, setStreamError] = useState<any>({ isError: false, message: "" });
+
   const [sqlQuery, setSqlQuery] = useState([])
   const [isArtifactSaved, setIsArtifactSaved] = useState(true);
   const [threadSwitched, setThreadSwitched] = useState(false);
@@ -241,9 +236,25 @@ export function useGraph(useGraphInput: UseGraphInput) {
     setFirstTokenReceived(true);
   };
 
+  const filterRedundantMessages = (messageList: BaseMessage[]) => {
+    return messageList.reduce((acc: any, currentMessage: any) => {
+      const hasLongerContainingText = acc.some(
+        (message: any) => message.content.includes(currentMessage.content) && message.content.length > currentMessage.content.length
+      );
+
+      if (!hasLongerContainingText) {
+        // Filter out any smaller items that are subsets of currentMessage.content
+        return acc.filter(
+          (message: any) => !currentMessage.content.includes(message.content)
+        ).concat(currentMessage);
+      }
+      return acc;
+    }, []);
+  };
+
   const streamMessageV2 = async (params: GraphInput) => {
     setFirstTokenReceived(false);
-
+    setStreamError({ isError: false, message: "" })
     if (!useGraphInput.threadId || !useGraphInput.assistantId) {
       toast.error("Thread ID or Assistant ID not found");
       return;
@@ -282,7 +293,7 @@ export function useGraph(useGraphInput: UseGraphInput) {
     setIsStreaming(true);
     let runId = "";
     let followupMessageId = "";
-    let aiMessageContent = "";
+    let aiMessageContent: any = "";
     const processedMessageIds = new Set<string>(); // Track unique message IDs to prevent duplicates
     const addedCardIds = new Set<string>(); // Track unique cardIds to prevent duplicates in artifacts
     const addedCodes = new Set<string>();
@@ -292,6 +303,8 @@ export function useGraph(useGraphInput: UseGraphInput) {
     const addedInsightText = new Set<string>();
     const addedInsightError = new Set<string>();
     const textSet: any = []
+    const uniqueAIMessageContents = new Set<string>();
+
     try {
       const stream = client.runs.stream(useGraphInput.threadId, useGraphInput.assistantId, {
         input: { ...input, company_name: initialCompanyName, database_id: initialDbName, schema: modelSchema },
@@ -300,27 +313,74 @@ export function useGraph(useGraphInput: UseGraphInput) {
 
       for await (const chunk of stream) {
         const eventData = chunk?.data;
+        if (chunk.event === "error") {
+          const errorMessage = eventData.message || "An unknown error occurred.";
+
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            new AIMessage({
+              content: `${errorMessage} — ${new Date().toLocaleTimeString()}`, // Append timestamp for uniqueness
+              id: uuidv4()
+            }),
+          ]);
+
+          setStreamError({ isError: true, message: errorMessage });
+          continue;
+        }
 
         if (!runId && eventData?.metadata?.run_id) {
           runId = eventData.metadata.run_id;
         }
 
         if (eventData?.event === "on_chat_model_stream") {
-          if (eventData.metadata.langgraph_node === "generateArtifact") {
-            const messageChunk = eventData.data.chunk?.[1]?.content || "";
+          const messageChunk = eventData.data.chunk.content?.[0]?.text || ""; // Directly access text from chunk
+          if (messageChunk) {
+            aiMessageContent += messageChunk;  // Append chunk to cumulative content
 
-            if (!messageChunk.includes(inputMessageContent)) {
-              aiMessageContent += messageChunk;
-            }
+            // Update state immediately for incremental rendering
+            setMessages((prevMessages) => {
+              const updatedMessages = [...prevMessages];
+              let foundSubset = false;
+              const lastMessageIndex = updatedMessages.length - 1;
+
+              // Check if the last message is an AIMessage and a subset of the new content
+              if (
+                lastMessageIndex >= 0 &&
+                updatedMessages[lastMessageIndex] instanceof AIMessage
+              ) {
+                const lastMessage = updatedMessages[lastMessageIndex] as AIMessage;
+
+                // Check if the new content includes the last message's content
+                if (aiMessageContent.includes(lastMessage.content)) {
+                  // Update the last message with the more complete content
+                  updatedMessages[lastMessageIndex] = new AIMessage({
+                    content: aiMessageContent,
+                    id: uuidv4(),
+                  });
+                  foundSubset = true;
+                }
+              }
+
+              // Only add a new message if no existing message content was found as a subset
+              if (!foundSubset) {
+                updatedMessages.push(
+                  new AIMessage({
+                    content: aiMessageContent,
+                    id: uuidv4(),
+                  })
+                );
+              }
+
+              return filterRedundantMessages(updatedMessages);;
+            });
           }
         }
 
+
         if (eventData?.event === "on_chain_end") {
-          console.log("CHUNK", chunk)
           const outputMessages = eventData?.data?.output?.messages;
           const images: string[] = eventData?.data?.output?.image_outputs;
           const textResult: string[] = eventData?.data?.output?.text_outputs;
-          console.log("TEXT RESULTsssssssssssssssssssssssssss", textResult)
           if (outputMessages) {
             outputMessages.forEach(async (msg: any) => {
               const messageContent = Array.isArray(msg.content)
@@ -369,56 +429,7 @@ export function useGraph(useGraphInput: UseGraphInput) {
                   const explanation = codeData?.explanation
                   const pythonCode = codeData?.python_code
                   const result = codeData?.result
-                  if (useGraphInput.threadId && runId) {
-                    const streamStatus = await client.runs.get(useGraphInput.threadId, runId);
-                    // console.log("STREAM STATUS", streamStatus)
-                    // if(streamStatus && streamStatus.status === 'success') {
-                    //   console.log("RESULT AFTER STREAM FINISHED",result)
-                    //   if (result && result.outputs && result.outputs.length > 0) {
-                    //     result.outputs.forEach((output:any, index:number) => {
-                    //       if (output.data) {
-                    //         if (output.data['text/plain']) {
-                    //           const plainText = output.data['text/plain'];
-                    //           if (!plainText.includes('<Figure size') && !plainText.includes('Axes>')) {
-                    //               useGraphInput.setInsightsResult((prevInsightResult:any) => [
-                    //                   ...prevInsightResult,
-                    //                   { type: 'text', value: plainText }
-                    //               ]);
-                    //           }
-                    //       }
-                    //             if (output.data['image/png']) {
-                    //                   const generatedImages = output.data['image/png'];
-                    //                   if (typeof generatedImages) {
-                    //                           useGraphInput.setInsightsResult((prevInsightResult:any) => [
-                    //                               ...prevInsightResult,
-                    //                               { type: 'image', value: generatedImages }
-                    //                           ]);
-                    //                   }
-                    //               }
-                    //           if (output.evalue) {
-                    //             const evalue = output.evalue;
-                    //             if(evalue) {
-                    //                 useGraphInput.setInsightsResult((prevInsightResult:any) => [
-                    //                     ...prevInsightResult,
-                    //                     { type: 'error', error: evalue }
-                    //                 ]);
-                    //             }
-                    //         }
-                    //         if (output.text) {
-                    //             const text = output.text;
-                    //             if(text) {
-                    //                 newInsights.push({ type: 'error', error: text });
-                    //                 useGraphInput.setInsightsResult((prevInsightResult:any) => [
-                    //                     ...prevInsightResult,
-                    //                     { type: 'error', error: text }
-                    //                 ]);
-                    //             }
-                    //         } 
-                    //       }
-                    //     })
-                    //   }
-                    // }
-                  }
+
                   if (result) {
                     textSet.push(result);
                   }
@@ -433,12 +444,6 @@ export function useGraph(useGraphInput: UseGraphInput) {
                     useGraphInput.setInsightsText((prevText: any) => [...prevText, explanation]);
                     useGraphInput.setInsightsCode((prevCode: any) => [...prevCode, pythonCode]);
                     setArtifact((prevArtifact) => {
-                      // const isCodeExists = prevArtifact?.contents.some((content: any) => content.code === pythonCode);
-                      // const isExplanationExists = prevArtifact?.contents.some((content: any) => content.explanation === explanation);
-
-                      // if (isCodeExists || isExplanationExists) {
-                      //   return prevArtifact; // Skip if either exists
-                      // }
                       if (prevArtifact?.contents.some((content: any) => content.type === "insight")) {
                         return prevArtifact;  // Skip if image type already exists
                       }
@@ -500,68 +505,63 @@ export function useGraph(useGraphInput: UseGraphInput) {
         }
       }
 
+
+
       if (aiMessageContent && !aiMessageContent.includes(inputMessageContent)) {
-        const finalAiMessage: any = new AIMessage({
+        const finalAiMessage = new AIMessage({
           content: aiMessageContent,
           id: uuidv4(),
         });
-        if (!processedMessageIds.has(finalAiMessage.id)) {
-          setMessages((prevMessages) => [...prevMessages, finalAiMessage]);
-        }
+
+        setMessages((prevMessages) => {
+          const updatedMessages = [...prevMessages];
+          let foundSubset = false;
+
+          for (let i = 0; i < updatedMessages.length; i++) {
+            const existingMessage = updatedMessages[i] as AIMessage;
+
+            // Check if the new message content contains the content of an existing message
+            if (aiMessageContent.includes(existingMessage.content)) {
+              // Replace the existing message with the new, more complete message
+              updatedMessages[i] = finalAiMessage;
+              foundSubset = true;
+              break;
+            }
+          }
+
+          // Only add the new message if it wasn't a superset of any existing message
+          if (!foundSubset) {
+            updatedMessages.push(finalAiMessage);
+          }
+
+          return filterRedundantMessages(updatedMessages);
+        });
       }
+
+
     } catch (error) {
       console.error("Error streaming message:", error);
+      const errorMessage = "A streaming error occurred.";
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        new AIMessage({
+          content: `${errorMessage} — ${new Date().toLocaleTimeString()}`, // Append timestamp for uniqueness
+          id: uuidv4(),
+        }),
+      ]);
+      setStreamError({ isError: true, message: errorMessage });
+
+      // Add error message as an AI message
+
     } finally {
       setIsStreaming(false);
-      console.log("TEXT SET", textSet)
       setSelectedBlocks(undefined);
     }
-
-    // if (runId) {
-    //   shareRun(runId).then(async (sharedRunURL) => {
-    //     if (!sharedRunURL) {
-    //       console.warn("Shared run URL is undefined.");
-    //       return;
-    //     }
-
-    //     setMessages((prevMessages) =>
-    //       prevMessages.map((msg) => {
-    //         if (
-    //           msg.id === followupMessageId &&
-    //           msg instanceof AIMessage &&
-    //           !msg.additional_kwargs?.tool_calls?.find((tc: any) => tc.id === sharedRunURL)
-    //         ) {
-    //           const toolCall: any = {
-    //             id: sharedRunURL.split("https://smith.langchain.com/public/")[1]?.split("/")[0] || "",
-    //             function: {
-    //               name: "langsmith_tool_ui",
-    //               arguments: JSON.stringify({ sharedRunURL }),
-    //             },
-    //             type: "function",
-    //           };
-
-    //           return new AIMessage({
-    //             ...msg,
-    //             content: msg.content,
-    //             id: msg.id,
-    //             additional_kwargs: {
-    //               ...msg.additional_kwargs,
-    //               tool_calls: msg.additional_kwargs?.tool_calls ? [...msg.additional_kwargs.tool_calls, toolCall] : [toolCall],
-    //             },
-    //           });
-    //         }
-    //         return msg;
-    //       })
-    //     );
-    //   }).catch((e) => console.error("Error sharing run:", e));
-    // }
   };
 
   const handleGetDatasetQuery = async (cardId: number) => {
 
     try {
-      // Fetch the card details using the provided cardId
-      // Fetch the card details using the provided cardId
       const fetchedCard = await ChatCardApi.get({ cardId });
       const queryCard = await ChatCardApi.query({ cardId });
       const getDatasetQuery = fetchedCard?.dataset_query;
@@ -630,12 +630,6 @@ export function useGraph(useGraphInput: UseGraphInput) {
 
     setArtifact((prev) => {
       if (!prev) {
-        // toast({
-        //   title: "Error",
-        //   description: "No artifactV2 found",
-        //   variant: "destructive",
-        //   duration: 5000,
-        // });
         return prev;
       }
       const newArtifact = {
@@ -650,12 +644,6 @@ export function useGraph(useGraphInput: UseGraphInput) {
   const setArtifactContent = (index: number, content: string) => {
     setArtifact((prev) => {
       if (!prev) {
-        // toast({
-        //   title: "Error",
-        //   description: "No artifact found",
-        //   variant: "destructive",
-        //   duration: 5000,
-        // });
         return prev;
       }
       const newArtifact = {
@@ -743,7 +731,8 @@ export function useGraph(useGraphInput: UseGraphInput) {
     setUpdateRenderedArtifactRequired,
     isArtifactSaved,
     firstTokenReceived,
-    sqlQuery
+    sqlQuery,
+    streamError
     // card, 
     // result,
     // defaultQuestion

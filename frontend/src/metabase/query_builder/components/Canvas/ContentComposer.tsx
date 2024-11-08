@@ -18,10 +18,8 @@ import { GraphInput } from "./hooks/use-graph/useGraph";
 import { Toaster } from "./ui/toaster";
 import { ArtifactV3, ProgrammingLanguageOptions, Reflections } from "./types"
 import { Thread as ThreadType } from "@langchain/langgraph-sdk";
-import { ThreadMessage } from "@assistant-ui/react";
-import { CardApi } from "metabase/services";
+import { CardApi, ChatCardApi } from "metabase/services";
 import Question from "metabase-lib/v1/Question";
-// import { useToast } from "./hooks/use-toast";
 
 export interface ContentComposerChatInterfaceProps {
   messages: BaseMessage[];
@@ -51,6 +49,7 @@ export interface ContentComposerChatInterfaceProps {
   setResult: Dispatch<SetStateAction<any>>;
   setLoading: Dispatch<SetStateAction<boolean>>;
   sqlQuery?: any;
+  errorMessage?: string;
 }
 
 export function ContentComposerChatInterface(
@@ -59,6 +58,8 @@ export function ContentComposerChatInterface(
   // const { toast } = useToast();
   const { messages, setMessages, streamMessage } = props;
   const [isRunning, setIsRunning] = useState(false);
+
+  // Inside your ContentComposerChatInterface component
   async function onNew(message: AppendMessage): Promise<void> {
     if (message.content?.[0]?.type !== "text") {
       // toast({
@@ -90,7 +91,7 @@ export function ContentComposerChatInterface(
 
   function isMessageContentWithArgs(item: ThreadAssistantContentPart): item is ToolCallContentPart {
     return item.type === 'tool-call' && 'args' in item;
-}
+  }
 
   const threadMessages = useExternalMessageConverter<BaseMessage>({
     callback: convertLangchainMessages,
@@ -100,6 +101,9 @@ export function ContentComposerChatInterface(
 
   useEffect(() => {
     const fetchHistoricalMessages = async () => {
+      props.setCard([])
+      props.setResult([])
+      props.setDefaultQuestion([])
       const addedCardIds = new Set<string>(); // Track unique cardIds to prevent duplicates in artifacts
       const addedCodes = new Set<string>();
       const addedExplanation = new Set<string>();
@@ -111,16 +115,16 @@ export function ContentComposerChatInterface(
               try {
                 const cardData = JSON.parse(contentItem.result as string);
                 const cardId = cardData?.card_id;
+
                 const explanation = cardData?.explanation;
                 const pythonCode = cardData?.python_code;
 
                 if (cardId && !addedCardIds.has(cardId)) {
                   addedCardIds.add(cardId);
-                  await handleGetDatasetQuery(cardId);
-
-                  props.setArtifact((prevArtifact) => {
+                  const cardData = await handleGetDatasetQuery(cardId);
+                  props.setArtifact((prevArtifact: any) => {
                     if (prevArtifact?.contents.some((content: any) => content.cardId === cardId)) {
-                      return prevArtifact;
+                      return prevArtifact;  // Skip if cardId already exists
                     }
                     return {
                       ...prevArtifact,
@@ -130,7 +134,8 @@ export function ContentComposerChatInterface(
                         {
                           index: (prevArtifact?.contents.length || 0) + 1,
                           type: "card",
-                          title: `Card ID: ${cardId}`,
+                          title: cardData.name || `Card ID: ${cardId}`,
+                          description: cardData.description,
                           cardId: cardId,
                         } as any,
                       ],
@@ -178,142 +183,77 @@ export function ContentComposerChatInterface(
     }
   }, [threadMessages]);
 
-function adhocQuestionHash(question: any): string {
-  if (question.display) {
-    // without "locking" the display, the QB will run its picking logic and override the setting
-    question = Object.assign({}, question, { displayIsLocked: true });
+  function adhocQuestionHash(question: any): string {
+    if (question.display) {
+      // without "locking" the display, the QB will run its picking logic and override the setting
+      question = Object.assign({}, question, { displayIsLocked: true });
+    }
+    return btoa(decodeURIComponent(encodeURIComponent(JSON.stringify(question))));
   }
-  return btoa(decodeURIComponent(encodeURIComponent(JSON.stringify(question))));
-}
 
-const handleGetDatasetQuery = async (cardId: number) => {
-  
-  try {
+  const handleGetDatasetQuery = async (cardId: number) => {
+
+    try {
       // Fetch the card details using the provided cardId
-      const fetchedCard = await CardApi.get({ cardId });
-      const queryCard = await CardApi.query({ cardId });
+      const fetchedCard = await ChatCardApi.get({ cardId });
+      const queryCard = await ChatCardApi.query({ cardId });
       const getDatasetQuery = fetchedCard?.dataset_query;
 
       if (!getDatasetQuery) {
-          throw new Error("No dataset query found for this card.");
+        throw new Error("No dataset query found for this card.");
       }
 
       // Create a new question object based on the fetched card's dataset query
       const newQuestion = Question.create({
-          databaseId: getDatasetQuery.database,
-          name: fetchedCard.name,
-          type: "query",
-          display: fetchedCard.display,
-          visualization_settings: {},
-          dataset_query: getDatasetQuery,
-          isExample: false
+        databaseId: getDatasetQuery.database,
+        name: fetchedCard.name,
+        type: fetchedCard.query_type,
+        display: fetchedCard.display,
+        visualization_settings: {},
+        dataset_query: getDatasetQuery,
+        isExample: false
       });
 
       // Generate a unique hash for this question
-      const itemToHash = {
+      let itemToHash;
+      if (fetchedCard.query_type === "query") {
+        itemToHash = {
           dataset_query: {
-              database: getDatasetQuery.database,
-              type: getDatasetQuery.type,
-              query: getDatasetQuery.query
+            database: getDatasetQuery.database,
+            type: getDatasetQuery.type,
+            query: getDatasetQuery.query
           },
 
           display: fetchedCard.display,
           visualization_settings: {},
           type: "question",
-      };
+        };
+      } else {
+        itemToHash = {
+          dataset_query: {
+            database: getDatasetQuery.database,
+            type: getDatasetQuery.type,
+            native: getDatasetQuery.native
+          },
+
+          display: fetchedCard.display,
+          visualization_settings: {},
+          type: "question",
+        };
+      }
       const hash = adhocQuestionHash(itemToHash);
-      // Append new values safely by ensuring prevCard is always an array
       props.setCard((prevCard: any) => Array.isArray(prevCard) ? [...prevCard, { ...fetchedCard, hash, typeQuery: getDatasetQuery.type }] : [{ ...fetchedCard, hash, typeQuery: getDatasetQuery.type }]);
       props.setDefaultQuestion((prevDefaultQuestion: any) => Array.isArray(prevDefaultQuestion) ? [...prevDefaultQuestion, newQuestion] : [newQuestion]);
       props.setResult((prevResult: any) => Array.isArray(prevResult) ? [...prevResult, queryCard] : [queryCard]);
       props.setCardHash((prevCardHash: any) => Array.isArray(prevCardHash) ? [...prevCardHash, hash] : [hash]);
 
-  } catch (error) {
+      return fetchedCard;
+    } catch (error) {
       console.error("Error fetching card content:", error);
-  } finally {
-    props.setLoading(false);
-  }
-};
-
-// const addedCardIds = new Set<string>(); // Track unique cardIds to prevent duplicates in artifacts
-// const addedCodes = new Set<string>();
-// const addedExplanation = new Set<string>();
-// // Loop through each message in threadMessages
-//   (async function historicalMessages() {
-//     for (const message of threadMessages) {
-//       // Check if the message role is "assistant"
-//       if (message.role === "assistant") {
-//         // Loop through the content array within the message
-//         for (const contentItem of message.content) {
-//           // Check if args exist within the content item
-//           if (isMessageContentWithArgs(contentItem)) {
-//             try {
-//               const cardData = JSON.parse(contentItem.result as string);
-//               console.log("CARD DATA",cardData)
-//               const cardId = cardData?.card_id;
-//               const explanation = cardData?.explanation
-//               const pythonCode = cardData?.python_code
-//               const result = cardData?.result
-  
-//               if (cardId && !addedCardIds.has(cardId)) {  
-//                 addedCardIds.add(cardId);
-//                 await handleGetDatasetQuery(cardId);
-  
-//                 // Update artifact state
-//                 props.setArtifact((prevArtifact) => {
-//                   if (prevArtifact?.contents.some((content: any) => content.cardId === cardId)) {
-//                     return prevArtifact;  
-//                   }
-  
-//                   return {
-//                     ...prevArtifact,
-//                     currentIndex: (prevArtifact?.contents.length || 0) + 1,
-//                     contents: [
-//                       ...(prevArtifact?.contents || []),
-//                       {
-//                         index: (prevArtifact?.contents.length || 0) + 1,
-//                         type: "card",
-//                         title: `Card ID: ${cardId}`,
-//                         cardId: cardId,
-//                       } as any,
-//                     ],
-//                   };
-//                 });
-//               } else if (pythonCode && explanation && !(addedCodes.has(pythonCode)) && !(addedExplanation.has(explanation))) {
-//                     addedCodes.add(pythonCode)
-//                     addedExplanation.add(explanation)
-//                     // console.log("PYTHON CODE",pythonCode)
-//                     props.setArtifact((prevArtifact) => {
-//                       const isCodeExists = prevArtifact?.contents.some((content: any) => content.code === pythonCode);
-//                       const isExplanationExists = prevArtifact?.contents.some((content: any) => content.explanation === explanation);
-
-//                       if (isCodeExists || isExplanationExists) {
-//                         return prevArtifact;  // Skip if either exists
-//                       }
-  
-//                       return {
-//                         ...prevArtifact,
-//                         currentIndex: (prevArtifact?.contents.length || 0) + 1,
-//                         contents: [
-//                           ...(prevArtifact?.contents || []),
-//                           {
-//                             index: (prevArtifact?.contents.length || 0) + 1,
-//                             type: "code",
-//                             title: `Code: ${(prevArtifact?.contents.length || 0) + 1}`,
-//                             code: pythonCode,
-//                           } as any,
-//                         ],
-//                       };
-//                     });
-//               }
-//             } catch (e) {
-//               console.error("Failed to parse card data:", e);
-//             }
-//           }
-//         }
-//       }
-//     }
-//   })();
+    } finally {
+      props.setLoading(false);
+    }
+  };
 
   const runtime = useExternalStoreRuntime({
     messages: threadMessages,
@@ -322,7 +262,7 @@ const handleGetDatasetQuery = async (cardId: number) => {
   });
 
   return (
-    <div style={{height: "100%"}}>
+    <div style={{ height: "100%" }}>
       <AssistantRuntimeProvider runtime={runtime}>
         <Thread
           handleGetReflections={props.handleGetReflections}
@@ -337,6 +277,7 @@ const handleGetDatasetQuery = async (cardId: number) => {
           switchSelectedThread={props.switchSelectedThread}
           deleteThread={props.deleteThread}
           sqlQuery={props.sqlQuery}
+          errorMessage={props.errorMessage}
         />
       </AssistantRuntimeProvider>
       <Toaster />
